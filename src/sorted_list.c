@@ -2,7 +2,6 @@
 // Created by Andrei Moculescu on 29.10.18.
 //
 #include <sorted_list.h>
-#include <tests.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -65,27 +64,29 @@ slln* SortedLinkedList_getSmallest(sll* list){
 void SortedLinkedList_delete(sll* list){
     int done = 0;
     slln* current_element;
-    while(!done){
+    while(!done) {
         current_element = list->first;
-        if(current_element->next != NULL) {
+        if (current_element->next != NULL) {
             list->first = current_element->next;
             free(current_element);
-        }else {
+        } else {
             //free(current_element);
             done = 1;
         }
     }
-    free(current_element);
+    free(list->first);
     free(list);
+    list = NULL;
 }
 
-void testCreateList(){
+sll* testCreateList(){
     sll* test_list = SortedLinkedList_create();
     printf("created a list at address %p\n", test_list);
+    return test_list;
 }
 
-void testAddtoList(){
-    sll* test_list;
+void testAddtoList(sll* test_list){
+    //sll* test_list;
     for(int i = 0; i < 10; i++){
         int data = rand() % 11;
         printf("added %d to list\n", data);
@@ -105,26 +106,26 @@ void testAddtoList(){
     }
 }
 
-void testSmallestInList(){
-    sll* test_list;
+void testSmallestInList(sll* test_list){
+    //sll* test_list;
     slln* result = SortedLinkedList_getSmallest(test_list);
     printf("smallest item in list is %d\n", result->data);
 }
 
-void testDelete(){
-    sll* test_list;
+//Work_in_progress
+void testDelete(sll* test_list){
+    //sll* test_list;
     SortedLinkedList_delete(test_list);
     if(test_list == NULL){
         printf("deletion was successful");
     }else {
-        printf("deletion failed, data of first element at %p of list %p is %d\n", test_list->first, test_list,
-               test_list->first->data);
+        printf(&test_list);
     }
 }
 
 int main() {
-    testCreateList();
-    testAddtoList();
-    testSmallestInList();
-    testDelete();
+    sll* test_list = testCreateList();
+    testAddtoList(test_list);
+    testSmallestInList(test_list);
+    testDelete(test_list);
 }
