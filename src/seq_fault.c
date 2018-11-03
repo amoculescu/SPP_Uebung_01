@@ -22,5 +22,6 @@ int main()
 {
   student* s1 = create_student( "Max Mustermann", 424242, 1, "Computer Science" );
   free( s1 );
+  return 0;
 }
 

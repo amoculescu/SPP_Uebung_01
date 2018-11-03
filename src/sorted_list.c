@@ -118,7 +118,7 @@ void testDelete(SortedLinkedList* test_list){
     if(test_list == NULL){
         printf("deletion was successful");
     }else {
-        printf("deletion failed list is still at %p first with data %d, at address %p\n", test_list,test_list->first);
+        printf("deletion failed list is still at %p first with data, at address %p\n", test_list,test_list->first);
     }
 }
 
@@ -148,4 +148,5 @@ int main() {
     SortedLinkedList_addToList(test_list, (int) c - '0');
     printf("after:\n");
     printList(test_list);
+    return 0;
 }

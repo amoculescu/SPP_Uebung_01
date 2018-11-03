@@ -4,7 +4,7 @@
 typedef struct SortedLinkedList SortedLinkedList;
 typedef struct SortedLinkedListNode SortedLinkedListNode;
 
-SortedLinkedList* 
+SortedLinkedList*
 SortedLinkedList_create();
 
 void 
@@ -15,5 +15,4 @@ SortedLinkedList_delete( SortedLinkedList* list );
 
 SortedLinkedListNode*
 SortedLinkedList_getSmallest( SortedLinkedList* list );
-
 #endif
