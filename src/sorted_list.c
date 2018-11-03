@@ -87,7 +87,6 @@ SortedLinkedList* testCreateList(){
 }
 
 void testAddtoList(SortedLinkedList* test_list){
-    //sll* test_list;
     for(int i = 0; i < 10; i++){
         int data = rand() % 11;
         printf("added %d to list\n", data);
@@ -113,14 +112,12 @@ void testSmallestInList(){
     printf("smallest item in list is %d\n", result->data);
 }
 
-//Work_in_progress
 void testDelete(SortedLinkedList* test_list){
-    //sll* test_list;
     SortedLinkedList_delete(test_list);
     if(test_list == NULL){
         printf("deletion was successful");
     }else {
-        printf("deletion failed list is still at %p first with data %d, at address %p", test_list, test_list->first->data,test_list->first);
+        printf("deletion failed list is still at %p first with data %d, at address %p\n", test_list,test_list->first);
     }
 }
 
@@ -138,11 +135,9 @@ void printList(SortedLinkedList* list){
 int main() {
     char c;
     SortedLinkedList* test_list = testCreateList();
-    SortedLinkedList* test_list2 = testCreateList();
     testAddtoList(test_list);
-    testAddtoList(test_list2);
     testSmallestInList();
-//    testDelete(test_list);
+    testDelete(test_list);
     printf("numar");
 
     c = getchar();
