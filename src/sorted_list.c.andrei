@@ -5,30 +5,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct SortedLinkedList {
+typedef struct SortedLinkedList{
     struct SortedLinkedListNode* first;
-}SortedLinkedList;
+}sll;
 
 typedef struct SortedLinkedListNode{
     SortedLinkedListNode* next;
     int data;
-} SortedLinkedListNode;
+}slln;
 
-SortedLinkedList* SortedLinkedList_create(){
-    SortedLinkedList* list = malloc(sizeof(SortedLinkedList));
+sll* SortedLinkedList_create(){
+    sll* list = malloc(sizeof(sll));
     list->first = NULL;
     return list;
 }
 
-void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
-    SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
+void SortedLinkedList_addToList(sll* list, int data ){
+    slln *new_entry = malloc(sizeof(slln));
     new_entry->next = NULL;
     new_entry->data = data;
 
     if(list->first == NULL) {
         list->first = new_entry;
     }else{
-        SortedLinkedListNode* current_entry = list->first;
+        slln* current_entry = list->first;
         //data <= first in list
         if(current_entry->data >= data){
             new_entry->next = current_entry;
@@ -36,7 +36,7 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
         }else {
             int found = 0;
             //look for first element bigger than data
-            while ((current_entry->next != NULL) && (!found)) {
+            while (current_entry->next != NULL && !found) {
                 if(current_entry->next->data >= data){
                     new_entry->next = current_entry->next;
                     current_entry->next = new_entry;
@@ -53,7 +53,7 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
     }
 }
 
-SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
+slln* SortedLinkedList_getSmallest(sll* list){
     if(list->first == NULL){
         return NULL;
     }else{
@@ -61,9 +61,9 @@ SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     }
 }
 
-void SortedLinkedList_delete(SortedLinkedList* list){
+void SortedLinkedList_delete(sll* list){
     int done = 0;
-    SortedLinkedListNode* current_element;
+    slln* current_element;
     while(!done) {
         current_element = list->first;
         if (current_element->next != NULL) {
@@ -80,13 +80,13 @@ void SortedLinkedList_delete(SortedLinkedList* list){
     list = NULL;
 }
 
-SortedLinkedList* testCreateList(){
-    SortedLinkedList* test_list = SortedLinkedList_create();
+sll* testCreateList(){
+    sll* test_list = SortedLinkedList_create();
     printf("created a list at address %p\n", test_list);
     return test_list;
 }
 
-void testAddtoList(SortedLinkedList* test_list){
+void testAddtoList(sll* test_list){
     //sll* test_list;
     for(int i = 0; i < 10; i++){
         int data = rand() % 11;
@@ -94,7 +94,7 @@ void testAddtoList(SortedLinkedList* test_list){
         SortedLinkedList_addToList(test_list, data);
     }
     int done = 0;
-    SortedLinkedListNode* currentElement = test_list->first;
+    slln* currentElement = test_list->first;
     printf("going through list at %p again\n", test_list);
     while (!done){
         printf("Element in list found, address is %p, data is %d\n", currentElement, currentElement->data);
@@ -108,48 +108,27 @@ void testAddtoList(SortedLinkedList* test_list){
 }
 
 void testSmallestInList(){
-    SortedLinkedList* test_list;
-    SortedLinkedListNode* result = SortedLinkedList_getSmallest(test_list);
+    sll* test_list;
+    slln* result = SortedLinkedList_getSmallest(test_list);
     printf("smallest item in list is %d\n", result->data);
 }
 
 //Work_in_progress
-void testDelete(SortedLinkedList* test_list){
+void testDelete(sll* test_list){
     //sll* test_list;
     SortedLinkedList_delete(test_list);
     if(test_list == NULL){
         printf("deletion was successful");
     }else {
-        printf("deletion failed list is still at %p first with data %d, at address %p", test_list, test_list->first->data,test_list->first);
-    }
-}
-
-void printList(SortedLinkedList* list){
-    if (list->first != NULL) {
-        SortedLinkedListNode *current = list->first;
-        while (current->next != NULL) {
-            printf("Item: %d\n", current->data);
-            current = current->next;
-        }
-        printf("Item: %d\n", current->data);
+        printf("deletion failed list is still at %p first with data %d, at address %p", test_list, test_list->first);
     }
 }
 
 int main() {
-    char c;
-    SortedLinkedList* test_list = testCreateList();
-    SortedLinkedList* test_list2 = testCreateList();
+    sll* test_list = testCreateList();
+    sll* test_list2 = testCreateList();
     testAddtoList(test_list);
     testAddtoList(test_list2);
     testSmallestInList();
-//    testDelete(test_list);
-    printf("numar");
-
-    c = getchar();
-
-    printf("before:\n");
-    printList(test_list);
-    SortedLinkedList_addToList(test_list, (int) c - '0');
-    printf("after:\n");
-    printList(test_list);
+    testDelete(test_list);
 }
