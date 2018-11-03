@@ -1,0 +1,6 @@
+TARGET = Seq_Fault
+
+all:Seq_Fault
+
+Seq_Fault: seq_fault.c
+	gcc -o Seq_Fault seq_fault.c
