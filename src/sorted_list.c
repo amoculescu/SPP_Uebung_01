@@ -52,6 +52,29 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
         }
     }
 }
+/*
+void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
+    SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
+	new_entry->next = NULL;
+	new_entry->data = data;
+	// If the list is empty -> Insert as new first
+	if(list->first == NULL) {
+		list->first = new_entry;
+	// If the new value is smaller than the old first -> insert as the new first point
+	}else if(data <= list->first->data){
+	    new_entry->next = list->first;
+	    list->first = new_entry;
+	}else { 
+        SortedLinkedListNode* current_entry = list->first;
+		// go through the list until it either ende or the correct locatio is reached
+		while(current_entry->next != NULL && current_entry->next->data <= data) {
+			current_entry = current_entry->next;
+		}
+            new_entry->next = current_entry->next;
+            current_entry->next = new_entry;
+	}
+}
+*/
 
 SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     if(list->first == NULL){
@@ -81,6 +104,18 @@ void SortedLinkedList_delete(SortedLinkedList* list){
     free(list);
     list = NULL;
 }
+/*
+void SortedLinkedList_delete(SortedLinkedList* list){
+    SortedLinkedListNode* current_entry;
+	while(list->first != NULL){
+		current_entry = list->first;
+		list->first = current_entry->next;
+		free(current_entry);
+	}
+	free(list);
+	// list = NULL;
+}
+*/
 
 SortedLinkedList* testCreateList(){
     SortedLinkedList* test_list = SortedLinkedList_create();
@@ -89,7 +124,8 @@ SortedLinkedList* testCreateList(){
 }
 
 void testAddtoList(SortedLinkedList* test_list){
-    for(int i = 0; i < 10; i++){
+    int i;
+    for(i = 0; i < 10; i++){
         int data = rand() % 11;
         printf("added %d to list\n", data);
         SortedLinkedList_addToList(test_list, data);

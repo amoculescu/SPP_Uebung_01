@@ -3,4 +3,4 @@ TARGET = SortedList
 all:SortedList
 
 SortedList: sorted_list.c sorted_list.h
-	gcc -o SortedList sorted_list.c -I
+	gcc sorted_list.c -o SortedList  -I .

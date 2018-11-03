@@ -3,4 +3,4 @@ TARGET = HelloWorld
 all:HelloWorld
 
 HelloWorld: HelloWorld.c
-	gcc -o HelloWorld HelloWorld.c
+	gcc HelloWorld.c -o HelloWorld 
