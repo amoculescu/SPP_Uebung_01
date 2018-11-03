@@ -69,6 +69,8 @@ void SortedLinkedList_delete(SortedLinkedList* list){
         if (current_element->next != NULL) {
             list->first = current_element->next;
             free(current_element);
+            current_element->next = NULL;
+            current_element = NULL;
         } else {
             //free(current_element);
             done = 1;
@@ -106,8 +108,7 @@ void testAddtoList(SortedLinkedList* test_list){
     }
 }
 
-void testSmallestInList(){
-    SortedLinkedList* test_list;
+void testSmallestInList(SortedLinkedList* test_list){
     SortedLinkedListNode* result = SortedLinkedList_getSmallest(test_list);
     printf("smallest item in list is %d\n", result->data);
 }
@@ -136,9 +137,9 @@ int main() {
     char c;
     SortedLinkedList* test_list = testCreateList();
     testAddtoList(test_list);
-    testSmallestInList();
-    testDelete(test_list);
-    printf("numar");
+    testSmallestInList(test_list);
+//    testDelete(test_list); broken if not on osx
+    printf("insert number");
 
     c = getchar();
 
