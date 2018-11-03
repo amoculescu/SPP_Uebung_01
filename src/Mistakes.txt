@@ -1,0 +1,12 @@
+Kompilerfehler:
+C1:
+C2:
+vorher: new_stdent.[...]
+Fehler: Zugriffe auf verwiesenen Speicher eines Pointer via -> und nicht via .
+nachher: new_student->[...]
+
+Laufzeitfehler:
+L1:
+vorher: student∗ new_student;
+Fehler: Es wurde kein Speicherplatz reserviert!
+nachher: student* new_student = malloc(sizeof(student));

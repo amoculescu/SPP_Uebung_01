@@ -10,10 +10,10 @@ typedef struct
 } student;
 
 student* create_student( char* name, int matriculation_number, int semester, char* program ) {
-  student* new_student = malloc(sizeof(student));
+  student* new_student = malloc(sizeof(student)); //L1
   new_student->name = name;
-  new_student->matriculation_number = matriculation_number;
-  new_student->semester = semester;
+  new_student->matriculation_number = matriculation_number; //C1
+  new_student->semester = semester; //C2
   new_student->program = program;
   return new_student;
 }
