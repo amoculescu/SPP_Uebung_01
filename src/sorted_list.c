@@ -79,7 +79,8 @@ void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
 
 void test(){
     int j = 1;
-    for(int i = 0; i < 10; i++)
+    int i;
+    for(i = 0; i < 10; i++)
         j += 10;
     printf("j : %d", j);
 }
