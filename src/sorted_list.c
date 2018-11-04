@@ -77,6 +77,12 @@ void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
 	}
 }
 
+void test(){
+    int j = 1;
+    for(int i = 0; i < 10; i++)
+        j += 10;
+    printf("j : %d", j);
+}
 
 SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     if(list->first == NULL){
@@ -86,7 +92,7 @@ SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     }
 }
 
-void SortedLinkedList_delete(SortedLinkedList* list){
+/*void SortedLinkedList_delete(SortedLinkedList* list){
     int done = 0;
     SortedLinkedListNode* current_element;
     while(!done) {
@@ -105,8 +111,8 @@ void SortedLinkedList_delete(SortedLinkedList* list){
     list->first = NULL;
     free(list);
     list = NULL;
-}
-/*
+}*/
+
 void SortedLinkedList_delete(SortedLinkedList* list){
     SortedLinkedListNode* current_entry;
 	while(list->first != NULL){
@@ -116,7 +122,7 @@ void SortedLinkedList_delete(SortedLinkedList* list){
 	}
 	free(list);
 	// list = NULL;
-}*/
+}
 
 
 SortedLinkedList* testCreateList(){
@@ -176,8 +182,10 @@ int main() {
     SortedLinkedList* test_list = testCreateList();
     testAddtoList(test_list);
     testSmallestInList(test_list);
-//    testDelete(test_list); //broken if not on osx
+    test();
+    testDelete(test_list); //broken if not on osx
 
+    test_list = testCreateList();
     while(c != 1){
         printf("insert number\n");
         scanf("%d", &c);
