@@ -20,7 +20,9 @@ SortedLinkedList* SortedLinkedList_create(){
     return list;
 }
 
-void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
+
+
+/*void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
     SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
     new_entry->next = NULL;
     new_entry->data = data;
@@ -51,8 +53,8 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
             }
         }
     }
-}
-/*
+}*/
+
 void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
     SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
 	new_entry->next = NULL;
@@ -74,7 +76,7 @@ void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
             current_entry->next = new_entry;
 	}
 }
-*/
+
 
 SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     if(list->first == NULL){
@@ -114,8 +116,8 @@ void SortedLinkedList_delete(SortedLinkedList* list){
 	}
 	free(list);
 	// list = NULL;
-}
-*/
+}*/
+
 
 SortedLinkedList* testCreateList(){
     SortedLinkedList* test_list = SortedLinkedList_create();
@@ -170,19 +172,20 @@ void printList(SortedLinkedList* list){
 }
 
 int main() {
-    char c;
+    int c;
     SortedLinkedList* test_list = testCreateList();
     testAddtoList(test_list);
     testSmallestInList(test_list);
-//    testDelete(test_list); broken if not on osx
-    printf("insert number");
+//    testDelete(test_list); //broken if not on osx
 
-    c = getchar();
-
-    printf("before:\n");
-    printList(test_list);
-    SortedLinkedList_addToList(test_list, (int) c - '0');
-    printf("after:\n");
-    printList(test_list);
+    while(c != 1){
+        printf("insert number\n");
+        scanf("%d", &c);
+        printf("before:\n");
+        printList(test_list);
+        SortedLinkedList_addToList(test_list, c);
+        printf("after:\n");
+        printList(test_list);
+    }
     return 0;
 }
