@@ -20,41 +20,6 @@ SortedLinkedList* SortedLinkedList_create(){
     return list;
 }
 
-
-
-/*void SortedLinkedList_addToList(SortedLinkedList* list, int data ){
-    SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
-    new_entry->next = NULL;
-    new_entry->data = data;
-
-    if(list->first == NULL) {
-        list->first = new_entry;
-    }else{
-        SortedLinkedListNode* current_entry = list->first;
-        //data <= first in list
-        if(current_entry->data >= data){
-            new_entry->next = current_entry;
-            list->first = new_entry;
-        }else {
-            int found = 0;
-            //look for first element bigger than data
-            while ((current_entry->next != NULL) && (!found)) {
-                if(current_entry->next->data >= data){
-                    new_entry->next = current_entry->next;
-                    current_entry->next = new_entry;
-                    found = 1;
-                }else{
-                    current_entry = current_entry->next;
-                }
-            }
-            //inserted element if bigger than all elements in list
-            if(!found){
-                current_entry->next = new_entry;
-            }
-        }
-    }
-}*/
-
 void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
     SortedLinkedListNode *new_entry = malloc(sizeof(SortedLinkedListNode));
 	new_entry->next = NULL;
@@ -91,27 +56,6 @@ SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
         return list->first;
     }
 }
-
-/*void SortedLinkedList_delete(SortedLinkedList* list){
-    int done = 0;
-    SortedLinkedListNode* current_element;
-    while(!done) {
-        current_element = list->first;
-        if (current_element->next != NULL) {
-            list->first = current_element->next;
-            free(current_element);
-            current_element->next = NULL;
-            current_element = NULL;
-        } else {
-            //free(current_element);
-            done = 1;
-        }
-    }
-    free(list->first);
-    list->first = NULL;
-    free(list);
-    list = NULL;
-}*/
 
 void SortedLinkedList_delete(SortedLinkedList* list){
     SortedLinkedListNode* current_entry;
@@ -177,23 +121,27 @@ void printList(SortedLinkedList* list){
     }
 }
 
-int main() {
+void addToListInteractive(SortedLinkedList* list){
     int c;
+    while(c != -1){
+        printf("insert number, if you wish to exit insert -1\n");
+        scanf("%d", &c);
+        printf("before:\n");
+        printList(list);
+        SortedLinkedList_addToList(list, c);
+        printf("after:\n");
+        printList(list);
+    }
+}
+
+int main() {
     SortedLinkedList* test_list = testCreateList();
     testAddtoList(test_list);
     testSmallestInList(test_list);
     test();
-    testDelete(test_list); //broken if not on osx
+    testDelete(test_list);
 
     test_list = testCreateList();
-    while(c != 1){
-        printf("insert number\n");
-        scanf("%d", &c);
-        printf("before:\n");
-        printList(test_list);
-        SortedLinkedList_addToList(test_list, c);
-        printf("after:\n");
-        printList(test_list);
-    }
+    addToListInteractive(test_list);
     return 0;
 }
