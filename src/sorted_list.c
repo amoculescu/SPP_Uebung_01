@@ -1,9 +1,9 @@
 //
 // Created by Andrei Moculescu on 29.10.18.
 //
-#include <sorted_list.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "sorted_list.h"
 
 typedef struct SortedLinkedList {
     struct SortedLinkedListNode* first;
@@ -44,7 +44,8 @@ void SortedLinkedList_addToList( SortedLinkedList* list, int data ){
 
 void test(){
     int j = 1;
-    for(int i = 0; i < 10; i++)
+    int i;
+    for(i = 0; i < 10; i++)
         j += 10;
     printf("j : %d", j);
 }
@@ -123,15 +124,20 @@ void printList(SortedLinkedList* list){
 
 void addToListInteractive(SortedLinkedList* list){
     int c;
-    while(c != -1){
+    do{
         printf("insert number, if you wish to exit insert -1\n");
         scanf("%d", &c);
+        if(c == -1){
+           return; 
+        }
+
         printf("before:\n");
         printList(list);
         SortedLinkedList_addToList(list, c);
         printf("after:\n");
         printList(list);
-    }
+        
+    } while(1);
 }
 
 int main() {
