@@ -46,12 +46,28 @@ int main ( int argc, char *argv[] )
   Test #1
 */
     //...YOU NEED TO FILL HERE ...
-    
+
+    // starting time, terminating time
+    double starttime, stoptime;
+
+    starttime = omp_get_wtime();
+
+    xdoty = test01(n,x,y);
+
+    stoptime = omp_get_wtime();
+    wtime = stoptime - starttime;
+
     printf ( "  Sequential  %8d  %14.6e  %15.10f\n", n, xdoty, wtime );
 /*
   Test #2
 */
     //...YOU NEED TO FILL HERE ...
+
+    starttime = omp_get_wtime();
+    xdoty = test02(n,x,y);
+
+    stoptime = omp_get_wtime();
+    wtime = stoptime - starttime;
 
     printf ( "  Parallel    %8d  %14.6e  %15.10f\n", n, xdoty, wtime );
   
@@ -79,8 +95,9 @@ double test01 ( int n, double x[], double y[] )
 
   //...YOU NEED TO FILL HERE...
 
-  for(i = 0; i < n; i++){
-	xdoty += x[i] * y[i];
+  for(i = 0; i < sizeof(x); i++)
+  {
+	xdoty = xdoty + x[i] * y[i];
   }
 
   return xdoty;
@@ -95,16 +112,14 @@ double test02 ( int n, double x[], double y[] )
 
   xdoty = 0.0;
 
-  //...YOU NEED TO FILL 
+  //...YOU NEED TO FILL
 
-#pragma omp parallel for
-{
-	for(i = 0; i < n; i++){
-		x[i] += x[i] * y[i];
-  	}
-}
-xdoty = x.sum
+//parallelize the products
+#pragma omp parallel for reduction(+:xdoty)
+  for(i = 0; i < sizeof(x); i++)
+  {
+    xdoty = xdoty + x[i] * y[i];
+  }
 
   return xdoty;
 }
-
