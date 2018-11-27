@@ -9,7 +9,7 @@ all: $(EXECS)
 hello-openmp: hello-openmp.c
 	$(CC) -o $@ $<  $(CFLAGS)
 
-dotproduct: dotproduct.c  
+dotproduct: dotproduct.c
 	$(CC) -o $@ $< $(CFLAGS) -lm
 
 quickSortSequential: quickSortSequential.c  

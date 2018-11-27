@@ -120,7 +120,7 @@ double test01(int n, double x[], double y[])
 
 	//...YOU NEED TO FILL HERE...
 
-	for (i = 0; i < sizeof(x); i++)
+	for (i = 0; i < n; i++)
 	{
 		xdoty = xdoty + x[i] * y[i];
 	}
@@ -141,7 +141,7 @@ double test02(int n, double x[], double y[], int thrednum)
 
   //parallelize the products
 #pragma omp parallel for reduction(+:xdoty) numthreads(thrednum)
-	for (i = 0; i < sizeof(x); i++)
+	for (i = 0; i < n; i++)
 	{
 		xdoty = xdoty + x[i] * y[i];
 	}
