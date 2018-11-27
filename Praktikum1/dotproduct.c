@@ -16,12 +16,13 @@ int main ( int argc, char *argv[] )
   int n;
   double wtime;
   double *x;
+
   double xdoty;
   double *y;
 
   n = 100;
 
-  while ( n < 1000000 )
+  while ( n < 10000000 )
   {
     n = n * 10;
 
@@ -38,7 +39,7 @@ int main ( int argc, char *argv[] )
 
     for ( i = 0; i < n; i++ )
     {
-      y[i] = ( i + 1 ) * 6 * factor;
+      y[i] += ( i + 1 ) * 6 * factor;
     }
 
     printf ( "\n" );
@@ -95,7 +96,7 @@ double test01 ( int n, double x[], double y[] )
 
   //...YOU NEED TO FILL HERE...
 
-  for(i = 0; i < sizeof(x); i++)
+  for(i = 0; i < n; i++)
   {
 	xdoty = xdoty + x[i] * y[i];
   }
@@ -116,7 +117,7 @@ double test02 ( int n, double x[], double y[] )
 
 //parallelize the products
 #pragma omp parallel for reduction(+:xdoty)
-  for(i = 0; i < sizeof(x); i++)
+  for(i = 0; i < n; i++)
   {
     xdoty = xdoty + x[i] * y[i];
   }
