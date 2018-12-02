@@ -62,18 +62,19 @@ void quicksort(int* A, int l, int r)
 	int oldL = l;
 	int oldR = r;
 
-	if (r - l > 0)
-		partition(A, &l, &r);
+	if (r - l > 0) {
+        partition(A, &l, &r);
+    }
 
 
 	if (r - oldL > 0) {
-#pragma omp task final(r - oldL > 99) shared(A) firstprivate(r,oldL)
+#pragma omp task final(r - oldL <= 99) shared(A) firstprivate(r,oldL)
 		quicksort(A, oldL, r);
 	}
 
 
 	if (oldR - l > 0) {
-#pragma omp task final(oldR - l > 99)  shared(A) firstprivate(oldR, l)
+#pragma omp task final(oldR - l <= 99)  shared(A) firstprivate(oldR, l)
 		quicksort(A, l, oldR);
 	}
 
@@ -88,17 +89,19 @@ int main(int argc, char** argv)
 		//return 1;
 	}
 	// Read in number of elements
-	int length = 10000;
+	int length = strtol(argv[1], NULL, 10);
 	srand(14811);
 
 	// Allocate array
-	int *A = malloc(sizeof(int) * length);
+    int *A = malloc(sizeof(int) * length);
 
 
 	// Initialize array
+#pragma omp parallel for
 	for (int i = 0; i < length; i++) {
 		A[i] = rand() % length;
 	}
+#pragma omp taskwait
 
 	// Time the execution
 	omp_set_num_threads(16);

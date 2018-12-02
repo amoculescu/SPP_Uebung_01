@@ -134,6 +134,7 @@ int main ( int argc, char *argv[] )
 //
   mean = 0.0;
 
+/*
   for ( i = 1; i < M - 1; i++ )
   {
       w[i][0] = 100.0;
@@ -150,10 +151,34 @@ int main ( int argc, char *argv[] )
   {
       w[0][j] = 0.0;
   }
+  */
+
+#pragma omp parallel for
+    for ( i = 1; i < M - 1; i++ )
+    {
+        w[i][0] = 100.0;
+    }
+#pragma omp parallel for
+    for ( i = 1; i < M - 1; i++ )
+    {
+        w[i][N-1] = 100.0;
+    }
+#pragma omp parallel for
+    for ( j = 0; j < N; j++ )
+    {
+        w[M-1][j] = 100.0;
+    }
+#pragma omp parallel for
+    for ( j = 0; j < N; j++ )
+    {
+        w[0][j] = 0.0;
+    }
 //
 //  Average the boundary values, to come up with a reasonable
 //  initial value for the interior.
 //
+/*
+
   for ( i = 1; i < M - 1; i++ )
   {
       mean = mean + w[i][0] + w[i][N-1];
@@ -162,13 +187,26 @@ int main ( int argc, char *argv[] )
   {
       mean = mean + w[M-1][j] + w[0][j];
   }
+*/
+#pragma omp parallel for
+    for ( i = 1; i < M - 1; i++ )
+    {
+        mean = mean + w[i][0] + w[i][N-1];
+    }
 
-  mean = mean / ( double ) ( 2 * M + 2 * N - 4 );
-  cout << "\n";
-  cout << "  MEAN = " << mean << "\n";
+#pragma omp parallel for
+    for ( j = 0; j < N; j++ )
+    {
+        mean = mean + w[M-1][j] + w[0][j];
+    }
+
+    mean = mean / ( double ) ( 2 * M + 2 * N - 4 );
+    cout << "\n";
+    cout << "  MEAN = " << mean << "\n";
 // 
 //  Initialize the interior solution to the mean value.
 //
+#pragma omp for collapse(2)
   for ( i = 1; i < M - 1; i++ )
   {
       for ( j = 1; j < N - 1; j++ )
@@ -193,6 +231,7 @@ int main ( int argc, char *argv[] )
 //
 //  Save the old solution in U.
 //
+    #pragma omp for collapse(2)
       for ( i = 0; i < M; i++ ) 
       {
           for ( j = 0; j < N; j++ )
@@ -204,6 +243,7 @@ int main ( int argc, char *argv[] )
 //  Determine the new estimate of the solution at the interior points.
 //  The new solution W is the average of north, south, east and west neighbors.
 //
+    #pragma omp for collapse(2)
       for ( i = 1; i < M - 1; i++ )
       {
         for ( j = 1; j < N - 1; j++ )
@@ -214,7 +254,7 @@ int main ( int argc, char *argv[] )
 
 //  This initialization must be executed by one thread only 
       diff = 0.0;
-    
+    #pragma omp for collapse(2)
       for ( i = 1; i < M - 1; i++ )
       {
           for ( j = 1; j < N - 1; j++ )
