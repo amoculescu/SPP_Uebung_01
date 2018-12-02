@@ -65,19 +65,15 @@ void quicksort(int* A, int l, int r)
 	if (r - l > 0)
 		partition(A, &l, &r);
 
-
-	if (r - oldL > 0) {
-#pragma omp task final(r - oldL > 99) shared(A) firstprivate(r,oldL)
+#pragma omp task final(r - oldL < 99) shared(A) firstprivate(r,oldL)
+	if (r - oldL > 0)
 		quicksort(A, oldL, r);
-	}
 
 
-	if (oldR - l > 0) {
-#pragma omp task final(oldR - l > 99)  shared(A) firstprivate(oldR, l)
+#pragma omp task final(oldR - l < 99)  shared(A) firstprivate(oldR, l)
+	if (oldR - l > 0)
 		quicksort(A, l, oldR);
-	}
 
-#pragma omp taskwait
 }
 
 int main(int argc, char** argv)
@@ -85,10 +81,10 @@ int main(int argc, char** argv)
 	if (argc < 2)
 	{
 		printf("Usage: %s <array length>\n", argv[0]);
-		//return 1;
+		return 1;
 	}
 	// Read in number of elements
-	int length = 10000;
+	int length = strtol(argv[1], NULL, 10);
 	srand(14811);
 
 	// Allocate array
@@ -106,8 +102,12 @@ int main(int argc, char** argv)
 	starttime = omp_get_wtime();
 
 #pragma omp parallel
-	quicksort(A, 0, length - 1);
-#pragma omp taskwait	
+	{
+#pragma omp single
+		quicksort(A, 0, length - 1);
+#pragma omp barrier
+	}
+
 
 	stoptime = omp_get_wtime();
 	timespan = stoptime - starttime;
