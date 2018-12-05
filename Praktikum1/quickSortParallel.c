@@ -68,7 +68,7 @@ void quicksort(int* A, int l, int r)
 #pragma omp task final(r - oldL < 99) shared(A) firstprivate(r,oldL)
 	if (r - oldL > 0)
 		quicksort(A, oldL, r); 
-#pragma omp taskwait
+//#pragma omp taskwait
 
 #pragma omp task final(oldR - l < 99)  shared(A) firstprivate(oldR, l)
 	if (oldR - l > 0)
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
     {
 #pragma omp single
         quicksort(A, 0, length - 1);
-#pragma omp taskwait
+//#pragma omp taskwait
     }
 
 
