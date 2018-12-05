@@ -23,7 +23,7 @@ void partition(int* A, int* l, int* r)
     int pivotPos = *l;
     int pivot = A[*l];
     int mem;
-
+	printf("von %d bis %d mit Pivor: %d \n", *l, *r, pivot);
     *l = *l + 1;									//skip pivot
 
     while (*l <= *r) {
@@ -64,16 +64,16 @@ void quicksort(int* A, int l, int r)
 
     if (r - l > 0)
         partition(A, &l, &r);
-
+	
 #pragma omp task final(r - oldL < 99) shared(A) firstprivate(r,oldL)
-    if (r - oldL > 0)
-        quicksort(A, oldL, r);
-
+	if (r - oldL > 0)
+		quicksort(A, oldL, r); 
+#pragma omp taskwait
 
 #pragma omp task final(oldR - l < 99)  shared(A) firstprivate(oldR, l)
-    if (oldR - l > 0)
-        quicksort(A, l, oldR);
-
+	if (oldR - l > 0)
+		quicksort(A, l, oldR); 
+#pragma omp taskwait
 }
 
 int main(int argc, char** argv)
@@ -90,7 +90,6 @@ int main(int argc, char** argv)
     // Allocate array
     int *A = malloc(sizeof(int) * length);
 
-
     // Initialize array
     for (int i = 0; i < length; i++) {
         A[i] = rand() % length;
@@ -105,7 +104,7 @@ int main(int argc, char** argv)
     {
 #pragma omp single
         quicksort(A, 0, length - 1);
-#pragma omp barrier
+#pragma omp taskwait
     }
 
 
