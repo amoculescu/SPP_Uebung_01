@@ -23,7 +23,7 @@ void partition(int* A, int* l, int* r)
     int pivotPos = *l;
     int pivot = A[*l];
     int mem;
-	printf("von %d bis %d mit Pivor: %d \n", *l, *r, pivot);
+	
     *l = *l + 1;									//skip pivot
 
     while (*l <= *r) {
