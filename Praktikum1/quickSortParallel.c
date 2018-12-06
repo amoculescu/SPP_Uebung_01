@@ -42,7 +42,6 @@ void partition(int* A, int* l, int* r)
         if (A[*r] >= pivot) *r = *r - 1;
 
     }
-    //printf("%d", omp_get_thread_num());
     mem = A[*r];									//Swap pivot with last element smaller pivot
     A[*r] = A[pivotPos];
     A[pivotPos] = mem;
@@ -65,12 +64,11 @@ void quicksort(int* A, int l, int r)
     if (r - l > 0)
         partition(A, &l, &r);
 	
-#pragma omp task final(r - oldL < 99) shared(A) firstprivate(r,oldL)
+#pragma omp task final(r - oldL < 100) shared(A) firstprivate(r,oldL)
 	if (r - oldL > 0)
 		quicksort(A, oldL, r); 
-//#pragma omp taskwait
 
-#pragma omp task final(oldR - l < 99)  shared(A) firstprivate(oldR, l)
+#pragma omp task final(oldR - l < 100)  shared(A) firstprivate(oldR, l)
 	if (oldR - l > 0)
 		quicksort(A, l, oldR); 
 #pragma omp taskwait
@@ -104,7 +102,6 @@ int main(int argc, char** argv)
     {
 #pragma omp single
         quicksort(A, 0, length - 1);
-//#pragma omp taskwait
     }
 
 
@@ -118,9 +115,9 @@ int main(int argc, char** argv)
     }
 
     if (sorted)
-        printf("The array with lenght %d was sortet in %.16g s \n", length, timespan);
+        printf("The array with length %d was sorted in %.16g s \n", length, timespan);
     else
-        printf("sorting array faild");
+        printf("sorting array failed");
 
     free(A);
     return 0;

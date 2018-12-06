@@ -110,9 +110,9 @@ int main(int argc, char** argv)
 	}
 
 	if (sorted)
-		printf("The array with lenght %d was sortet in %.16g s \n", length, timespan);
+		printf("The array with length %d was sorted in %.16g s \n", length, timespan);
 	else
-		printf("sorting array faild");
+		printf("sorting array failed");
 
 	free(A);
 	return 0;
