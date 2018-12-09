@@ -9,12 +9,12 @@ x_dot_parallel = [1, 2, 4, 8, 16]
 x_dot_sequential = [1, 16]
 plt.plot(x_dot_parallel, data_dot_parallel, '-o', label='parallel')
 plt.plot(x_dot_sequential, data_dot_sequential, '-', label='sequential')
-plt.title("Evaluation of the " + title + " task")
+plt.title("Evaluation of the " + title)
 plt.xlabel("threads")
 plt.ylabel("time in sec")
 plt.legend()
 plt.grid()
-plt.savefig("plots/plot_" + title + ".pdf", kbox_inches='tight')
+plt.savefig("plots/plot_" + title + ".png", kbox_inches='tight')
 plt.show()
 
 # ================ Quicksort ================
@@ -26,12 +26,12 @@ x_quick = [5, 6, 7]
 
 plt.plot(x_quick, data_quick_parallel, '-o', label='parallel')
 plt.plot(x_quick, data_quick_sequential, '-o', label='sequential')
-plt.title("Evaluation of the " + title + " task")
+plt.title("Evaluation of the " + title)
 plt.xlabel("Array length (log)")
 plt.ylabel("time in sec")
 plt.legend()
 plt.grid()
-plt.savefig("plots/plot_" + title + ".pdf", kbox_inches='tight')
+plt.savefig("plots/plot_" + title + ".png", kbox_inches='tight')
 plt.show()
 
 # ================ Heatedplate ================
@@ -42,9 +42,9 @@ data_heated = [13.4109, 6.83496, 3.58897, 2.13486, 1.71605, 7.92361]
 x_heated = [1, 2, 4, 8, 16, 32]
 
 plt.plot(x_heated, data_heated, '-o')
-plt.title("Evaluation of the " + title + " task")
+plt.title("Evaluation of the " + title)
 plt.xlabel("threads")
 plt.ylabel("time in sec")
 plt.grid()
-plt.savefig("plots/plot_" + title + ".pdf", kbox_inches='tight')
+plt.savefig("plots/plot_" + title + ".png", kbox_inches='tight')
 plt.show()
