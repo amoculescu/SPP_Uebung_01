@@ -225,7 +225,7 @@ int main ( int argc, char *argv[] )
 
 //  This initialization must be executed by one thread only
       diff = 0.0;
-    #pragma omp parallel for shared(w, u) reduction(max:diff) // num_threads(1) //TODO:  1 thread or more?
+    #pragma omp parallel for shared(w, u) reduction(max:diff)
       for ( i = 1; i < M - 1; i++ )
       {
           for ( j = 1; j < N - 1; j++ )
