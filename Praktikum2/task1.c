@@ -127,7 +127,7 @@ void init_input( int w_myrank, int w_nprocs, int* input_arr,
             displs[i] = displs[i - 1] + sendcnts[i - 1];
     }
 
-    // Redistribute the input length
+    // Redistribute the input length    
     MPI_Scatter( sendcnts, 1, MPI_INT, input_len, 1, MPI_INT, 0, MPI_COMM_WORLD );
 
     // Redistribute the input
@@ -147,7 +147,7 @@ int main( int argc, char** argv ) {
     MPI_Comm_size( MPI_COMM_WORLD, &w_nprocs );
 
     init_clock_time();
-
+    
     //
     // Initialization phase
     //
@@ -157,6 +157,25 @@ int main( int argc, char** argv ) {
     int elem_arr[MAX_NUM_LOCAL_ELEMS];
 
     init_input( w_myrank, w_nprocs, elem_arr, &n, &total_n );
+
+    int color_rows = w_myrank / sqrt(w_nprocs);
+    MPI_Comm row_comm;
+    MPI_Comm_split(MPI_COMM_WORLD, color_rows, w_myrank, &row_comm);
+
+	int r_myrank, r_nprocs;
+    MPI_Comm_rank( row_comm, &r_myrank );
+    MPI_Comm_size( row_comm, &r_nprocs );
+
+    int color_cols = r_myrank ;
+    MPI_Comm col_comm;
+    MPI_Comm_split(row_comm, color_cols, r_myrank, &col_comm);
+
+	int c_myrank, c_nprocs;
+    MPI_Comm_rank( col_comm, &c_myrank );
+    MPI_Comm_size( col_comm, &c_nprocs );
+    
+    printf("total_n: %d, w_myrank: %d, w_nprocs %d\n, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d\n", w_myrank, w_nprocs, total_n, r_myrank, r_nprocs, c_myrank, c_nprocs);
+
 
     double start = get_clock_time();
 
@@ -176,8 +195,8 @@ int main( int argc, char** argv ) {
     MPI_Status stat_arr[MAX_NUM_LOCAL_ELEMS];
     int n_req = 0;
 
-    MPI_Isend( &(elem_arr[i]), 1, MPI_INT, arr_global_ranks[j], 0, 
-               MPI_COMM_WORLD, req_arr + n_req );
+    /*MPI_Isend( &(elem_arr[i]), 1, MPI_INT, arr_global_ranks[j], 0, 
+               MPI_COMM_WORLD, req_arr + n_req );*/
 
     // Receive element
     // TODO
