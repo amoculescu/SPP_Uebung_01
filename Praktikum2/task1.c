@@ -327,7 +327,7 @@ int main( int argc, char** argv ) {
 			if(arr_global_ranks[j] > 0){
 				arr_global_ranks[j] = arr_global_ranks[j] % 100000;
 				if( (w_myrank == 0) && (arr_global_ranks[j] == 0) ){
-					printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
+					printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
 					MPI_Recv(&recv_arr + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
 				}
 			}
