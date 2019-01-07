@@ -39,19 +39,6 @@ int verify_results( int* arr, int len, int myrank, int nprocs ) {
 	if(failed)
 		return 0;
 
-
-	// int recv_next;
-	// MPI_Status status;
-	// for(int i = 1; i < nprocs - 1; i++){
-	// 	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, 0, 0, &recv_next, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-	// 	printf("sendrecv %d, sent %d, recv: %d\n", i, arr[MAX_NUM_LOCAL_ELEMS - 1], recv_next);
-	// 	if(recv_next < arr[MAX_NUM_LOCAL_ELEMS])
-	// 		failed = 1;
-	// }
-	// TODO
-	// if(!failed)
-	// 	is_sorted_global++;
-
 	int neighbor_up, neighbor_down, len_next,recv_next, sent_to_prev;
 	MPI_Status status;
 	// send length
@@ -120,8 +107,6 @@ void init_input( int w_myrank, int w_nprocs, int* input_arr,
 	int* displs = NULL;
 
 	if( w_myrank == 0 ) {
-		printf( "Total number of input elements: %d\n", *total_elems );
-
 		global_arr = malloc( *total_elems * sizeof(int) );
 
 		double scale = *total_elems * 5;
@@ -201,24 +186,28 @@ int main( int argc, char** argv ) {
 
 	init_input( w_myrank, w_nprocs, elem_arr, &n, &total_n );
 
+	// split rows
 	int color_rows = w_myrank / sqrt(w_nprocs);
 	MPI_Comm row_comm;
 	MPI_Comm_split(MPI_COMM_WORLD, color_rows, w_myrank, &row_comm);
 
+	// set rank and number of procs in row
 	int r_myrank, r_nprocs;
 	MPI_Comm_rank( row_comm, &r_myrank );
 	MPI_Comm_size( row_comm, &r_nprocs );
 
+	//split columns
 	int color_cols = r_myrank ;
 	MPI_Comm col_comm;
 	MPI_Comm_split(MPI_COMM_WORLD, color_cols, r_myrank, &col_comm);
 
+	//set rank and number of procs in column
 	int c_myrank, c_nprocs;
 	MPI_Comm_rank( col_comm, &c_myrank );
 	MPI_Comm_size( col_comm, &c_nprocs );
 
 	//visualize split
-	 printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
+	//  printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
 
 
 	double start = get_clock_time();
@@ -230,14 +219,17 @@ int main( int argc, char** argv ) {
 	// }
 	// printf("]\n");
 
+	//dislacement arrays for allgatherv
 	int* row_displs = malloc(sizeof(int) * r_nprocs);
 	int* col_displs = malloc(sizeof(int) * r_nprocs);
-	int* sendcntsrows = malloc(sizeof(int) * r_nprocs);
-	int* sendcntscols = malloc(sizeof(int) * c_nprocs);
+
+	//number of items sent by each process
+	int* rows_send_counts = malloc(sizeof(int) * r_nprocs);
+	int* cols_send_counts = malloc(sizeof(int) * c_nprocs);
 	
 	//gather number of elements sent by each process
-	MPI_Allgather(&n, 1, MPI_INT, sendcntsrows, 1, MPI_INT, row_comm);
-	MPI_Allgather(&n, 1, MPI_INT, sendcntscols, 1, MPI_INT, col_comm);
+	MPI_Allgather(&n, 1, MPI_INT, rows_send_counts, 1, MPI_INT, row_comm);
+	MPI_Allgather(&n, 1, MPI_INT, cols_send_counts, 1, MPI_INT, col_comm);
 
 	// print cnt arrays
 	// printf("w_myrank: %d, sendcntrows[", w_myrank);
@@ -252,60 +244,62 @@ int main( int argc, char** argv ) {
 	// printf("]\n");
 
 
-	//init displacement arrays, and arrays holding row and col elements
+	// fill displacement arrays: add amount of items sent by each process to the exisiting amount of elements; first process can put items at the beginning thus displacement = 0
 	row_displs[0] = 0;
 	col_displs[0] = 0;
 	for( int i = 1; i < r_nprocs; ++i ){
-		row_displs[i] = row_displs[i - 1] + sendcntsrows[i - 1];
-		col_displs[i] = col_displs[i - 1] + sendcntscols[i - 1];
+		row_displs[i] = row_displs[i - 1] + rows_send_counts[i - 1];
+		col_displs[i] = col_displs[i - 1] + cols_send_counts[i - 1];
 	}
+
+
 	int row_arr_size = 0;
 	int col_arr_size = 0;
 
+	// create arrays for elements in row and column
 	for(int i = 0; i < r_nprocs; i ++){
-		row_arr_size += sendcntsrows[i];
-		col_arr_size += sendcntscols[i];
+		row_arr_size += rows_send_counts[i];
+		col_arr_size += cols_send_counts[i];
 	}
-
 	int* row_arr = malloc(sizeof(int) * row_arr_size);
 	int* col_arr = malloc(sizeof(int) * col_arr_size);
 
-	MPI_Allgatherv(elem_arr, n, MPI_INT, row_arr, sendcntsrows, row_displs, MPI_INT, row_comm);
-	MPI_Allgatherv(elem_arr, n, MPI_INT, col_arr, sendcntscols, col_displs, MPI_INT, col_comm);
+	// gather items across row and column
+	MPI_Allgatherv(elem_arr, n, MPI_INT, row_arr, rows_send_counts, row_displs, MPI_INT, row_comm);
+	MPI_Allgatherv(elem_arr, n, MPI_INT, col_arr, cols_send_counts, col_displs, MPI_INT, col_comm);
 
-	// sort
+	// sort items
 	qsort(row_arr, row_arr_size, sizeof(int), comp_func);
 	qsort(col_arr, col_arr_size, sizeof(int), comp_func);
 
 	//print row and col arrays
-	printf("w_myrank: %d, row_arr[", w_myrank);
-	for(int i = 0; i < row_arr_size; i++){
-		printf("%d, ", row_arr[i]);
-	}
-	printf("]\n");
+	// printf("w_myrank: %d, row_arr[", w_myrank);
+	// for(int i = 0; i < row_arr_size; i++){
+	// 	printf("%d, ", row_arr[i]);
+	// }
+	// printf("]\n");
 
-	printf("w_myrank: %d, col_arr[", w_myrank);
-	for(int i = 0; i < col_arr_size; i++){
-		printf("%d, ", col_arr[i]);
-	}
-	printf("]\n");
+	// printf("w_myrank: %d, col_arr[", w_myrank);
+	// for(int i = 0; i < col_arr_size; i++){
+	// 	printf("%d, ", col_arr[i]);
+	// }
+	// printf("]\n");
 
-	//calculate local ranks
+	// create arrays holding ranks. size of array is the highest number given. each index will hold the rank of the item of that value
 	int local_ranks_size = 0;
-	
 	if(col_arr_size > 0)
 		local_ranks_size = col_arr[col_arr_size - 1];
-
 	MPI_Allreduce(MPI_IN_PLACE, &local_ranks_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
 	int* local_ranks = malloc(sizeof(int) * local_ranks_size);
 	int* arr_global_ranks = malloc(sizeof(int) * local_ranks_size);
 
+	//init both arrays holding local and global ranks with 0;
 	for (int i = 0; i < local_ranks_size; i++){
 		local_ranks[i] = 0;
 		arr_global_ranks[i] = 0;
 	}
 	
+	// calculate ranks of elements. if rank of element is 0 set it as 100000 as to not be confused with an empty space in the array.
 	if(col_arr_size > 0){
 		int count;
 		for(int i = 0; i < col_arr_size; i++){
@@ -314,28 +308,29 @@ int main( int argc, char** argv ) {
 					count++;
 			}
 			if(count == 0)
-				local_ranks[col_arr[i] - 1] = 100000 + count;
+				local_ranks[col_arr[i] - 1] = 100000;
 			else
 				local_ranks[col_arr[i] - 1] = count;
 		}
 	}
 
-	printf("w_myrank: %d, local_rank[", w_myrank);
-	for(int i = 0; i < local_ranks_size; i++){
-		printf("%d, ", local_ranks[i]);
-	}
-	printf("]\n");	
+	// printf("w_myrank: %d, local_rank[", w_myrank);
+	// for(int i = 0; i < local_ranks_size; i++){
+	// 	printf("%d, ", local_ranks[i]);
+	// }
+	// printf("]\n");	
 
+	// make local ranks
 	MPI_Allreduce(local_ranks, arr_global_ranks, local_ranks_size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
 	// // // print global array
-	if(w_myrank == 0){
-		printf("w_myrank: %d, global_ranks[", w_myrank);
-		for(int i = 0; i < local_ranks_size; i++){
-			printf("%d, ", arr_global_ranks[i]);
-		}
-		printf("]\n");	
-	}
+	// if(w_myrank == 0){
+	// 	printf("w_myrank: %d, global_ranks[", w_myrank);
+	// 	for(int i = 0; i < local_ranks_size; i++){
+	// 		printf("%d, ", arr_global_ranks[i]);
+	// 	}
+	// 	printf("]\n");	
+	// }
 	//
 	// Redistribute data
 	// Adjust this code to your needs
@@ -352,10 +347,11 @@ int main( int argc, char** argv ) {
 
 	int recv;
 	int i;
+	// distribute items make a send request for every item 
 	do{
 		for(int j = 0; j < local_ranks_size; j++){
 			if ((j + 1)  == elem_arr[i]) {
-				printf("%d: w_myrank: %d sending %d to %d\n", j, w_myrank, elem_arr[i], arr_global_ranks[j] % 100000);
+				// printf("%d: w_myrank: %d sending %d to %d\n", j, w_myrank, elem_arr[i], arr_global_ranks[j] % 100000);
 				MPI_Isend( &(elem_arr[i]), 1, MPI_INT, arr_global_ranks[j] % 100000, 0, MPI_COMM_WORLD, req_arr + n_req );
 				elem_arr[i] = 0;
 				n_req++;
@@ -364,15 +360,16 @@ int main( int argc, char** argv ) {
 		i++;
 	}while(i < n);
 
+	// get item assigned to process
 	for(int j = 0; j < local_ranks_size; j++){
 		if( (w_myrank != 0) && (w_myrank == arr_global_ranks[j] % 100000)){
-			printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
+			// printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
 			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
 			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
 			n_stat++;
 		}
 		if((w_myrank == 0) && (arr_global_ranks[j] != 0) && (arr_global_ranks[j] % 100000 == 0)){
-			printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
+			// printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
 			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
 			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
 			n_stat++;
