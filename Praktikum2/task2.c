@@ -130,7 +130,7 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 
 	MPI_Status status;
 
-	for (int i = 0; i < nprocs; i = i * 2) {
+	for (int i = 1; i < nprocs; i = i * 2) {
 		kp_rank = myrank ^ i;
 
 		// exchange arrays size
