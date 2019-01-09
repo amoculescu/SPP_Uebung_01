@@ -27,9 +27,9 @@ int is_arr_sorted(int* arr, int len) {
 }
 
 
-**
+/**
 * Checks whether arr is sorted globally.
-** /
+**/
 int verify_results(int* arr, int len, int myrank, int nprocs) {
 	int is_sorted_global = 0;
 	int failed = 0;
