@@ -1,4 +1,6 @@
-int#include <mpi.h>
+// pielst :toint
+
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -32,6 +34,7 @@ int is_arr_sorted(int* arr, int len) {
 **/
 int verify_results(int* arr, int len, int myrank, int nprocs) {
 	int is_sorted_global = 0;
+	// TODO: From here on!
 	int failed = 0;
 	if (!(is_arr_sorted(arr, len)) || (len > 1))
 		failed = 1;
@@ -116,6 +119,8 @@ void merge_arr(int* arr1, int len1, int* arr2, int len2, int* arr_out, int* len_
 void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	int nprocs, MPI_Comm comm) {
 
+    //TODO: From here on!
+
 	// get own rank
 	int myrank;
 	MPI_Comm_rank(comm, &myrank);
@@ -134,14 +139,14 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 		kp_rank = myrank ^ i;
 
 		// exchange arrays size
-		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, &status);
+		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, MPI_COMM_WORLD, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
 
 		//create output arrays
 		kp_array = malloc(sizeof(int) * kp_array_size);
 		merged_array = malloc(sizeof(int) * (kp_array_size + len));
 
 		// exchange arrays
-		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, &status);
+		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, MPI_COMM_WORLD, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
 
 		// merge array output: merged_array..  len =  new lenght
 		merge_arr(arr, len, kp_array, kp_array_size, merged_array, &len);
@@ -244,6 +249,7 @@ void init_input(int w_myrank, int w_nprocs, int* input_arr,
 }
 
 int main(int argc, char** argv) {
+    double start = get_clock_time();
 
 	int w_myrank, w_nprocs;
 	MPI_Init(&argc, &argv);
@@ -261,7 +267,7 @@ int main(int argc, char** argv) {
 
 
 	//
-	// TODO
+	// TODO: From here on!
 	//
 
 	// split rows
@@ -400,6 +406,9 @@ int main(int argc, char** argv) {
 	// but before verifying the results
 	//
 
+
+	//TODO: Until here!
+
 	//
 	// Verify the data is sorted globally
 	//
@@ -413,10 +422,14 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	//TODO: This as well
+
 	// Get timing - max across all ranks
 	double elapsed_global;
-	MPI_Reduce(&elapsed, &elapsed_global, 1, MPI_DOUBLE,
-		MPI_MAX, 0, MPI_COMM_WORLD);
+    double elapsed = get_clock_time() - start;
+
+    MPI_Reduce(&elapsed, &elapsed_global, 1, MPI_DOUBLE,
+		MPI_MAX, 0, MPI_COMM_WORLD); //TODO: Elapsed is unkown!
 
 	if (w_myrank == 0) {
 		printf("Elapsed time (ms): %f\n", elapsed_global);
