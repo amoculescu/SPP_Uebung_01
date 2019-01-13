@@ -52,13 +52,11 @@ int verify_results( int* arr, int len, int myrank, int nprocs ) {
 	else
 		neighbor_down = myrank -1;
 	// check if next proc recieved an element
-	MPI_Sendrecv(&len, 1, MPI_INT, myrank, 0, &len_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
-	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_up, 0, &len_next, 1, MPI_INT, neighbor_down, 0, MPI_COMM_WORLD, &status);
 
 	//exchange
-	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, myrank, 0, &recv_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
-	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);	
-
+	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, neighbor_up, 0, &recv_next, 1, MPI_INT, neighbor_down, 0, MPI_COMM_WORLD, &status);
+	
 	if (len_next){
 		if(recv_next < sent_to_prev)
 			failed = 1;

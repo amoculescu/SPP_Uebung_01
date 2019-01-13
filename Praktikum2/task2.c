@@ -55,12 +55,10 @@ int verify_results(int* arr, int len, int myrank, int nprocs) {
 	else
 		neighbor_down = myrank - 1;
 	// check if next proc recieved an element
-	MPI_Sendrecv(&len, 1, MPI_INT, myrank, 0, &len_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
-	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_up, 0, &len_next, 1, MPI_INT, neighbor_down, 0, MPI_COMM_WORLD, &status);
 
 	//exchange
-	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, myrank, 0, &recv_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
-	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
+	MPI_Sendrecv(&arr[MAX_NUM_LOCAL_ELEMS - 1], 1, MPI_INT, neighbor_up, 0, &recv_next, 1, MPI_INT, neighbor_down, 0, MPI_COMM_WORLD, &status);
 
 	if (len_next) {
 		if (recv_next < sent_to_prev)
@@ -286,6 +284,8 @@ int main(int argc, char** argv) {
 	MPI_Comm_rank( col_comm, &c_myrank );
 	MPI_Comm_size( col_comm, &c_nprocs );
 
+	double start = get_clock_time();
+
 	//
 	// Initialization phase
 	//
@@ -294,7 +294,6 @@ int main(int argc, char** argv) {
 	int elem_arr[MAX_NUM_LOCAL_ELEMS];
 
 	init_input(w_myrank, w_nprocs, elem_arr, &n, &total_n);
-	double start = get_clock_time();
 
 	//visualize split
 	printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
@@ -389,7 +388,6 @@ int main(int argc, char** argv) {
 	// for (int i = 0; i < local_ranks_size; i++){
 	// 	arr_global_ranks[i] = arr_global_ranks[i] % 100000000;
 	// }
-					printf("count++");
 
 	int recv;
 	int i;
