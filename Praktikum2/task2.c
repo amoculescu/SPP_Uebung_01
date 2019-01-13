@@ -135,7 +135,9 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 
 	MPI_Status status;
 	int dim = log2(nprocs);
-	printf("myrank: %d, dim%d\n", myrank, dim - 1);
+	if(dim < 2)
+		dim = 2;
+	printf("myrank: %d, dim %d\n", myrank, dim - 1);
 	for (int i = 0; i < dim - 1; i++) {
 		kp_rank = myrank ^ (int)pow(2, i);
 		if(kp_rank > nprocs - 1)
@@ -308,10 +310,124 @@ int main(int argc, char** argv) {
 
 	int* merged_array_rows;
 	int* merged_array_cols;
-	int merged_array_size_rows, merged_array_size_cols;
+	int merged_array_rows_size, merged_array_cols_size;
 
-	all_gather_merge(elem_arr, n, &merged_array_rows, &merged_array_size_rows, r_nprocs, row_comm);
-	all_gather_merge(elem_arr, n, &merged_array_cols, &merged_array_size_cols, c_nprocs, col_comm);
+	all_gather_merge(elem_arr, n, &merged_array_rows, &merged_array_rows_size, r_nprocs, row_comm);
+	all_gather_merge(elem_arr, n, &merged_array_cols, &merged_array_cols_size, c_nprocs, col_comm);
+
+
+		//print row and col arrays
+	printf("w_myrank: %d, row_arr[", w_myrank);
+	for(int i = 0; i < merged_array_rows_size; i++){
+		printf("%d, ", merged_array_rows[i]);
+	}
+	printf("]\n");
+
+	printf("w_myrank: %d, col_arr[", w_myrank);
+	for(int i = 0; i < merged_array_cols_size; i++){
+		printf("%d, ", merged_array_cols[i]);
+	}
+	printf("]\n");
+
+
+	int local_ranks_size = 0;
+
+	if(merged_array_cols_size > 0)
+		local_ranks_size = merged_array_cols[merged_array_cols_size - 1];
+	MPI_Allreduce(MPI_IN_PLACE, &local_ranks_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+	int* local_ranks = malloc(sizeof(int) * local_ranks_size);
+	int* arr_global_ranks = malloc(sizeof(int) * local_ranks_size);
+
+	//init both arrays holding local and global ranks with 0;
+	for (int i = 0; i < local_ranks_size; i++){
+		local_ranks[i] = 0;
+		arr_global_ranks[i] = 0;
+	}
+	
+	// calculate ranks of elements. if rank of element is 0 set it as 100000 as to not be confused with an empty space in the array.
+
+	if(merged_array_cols_size > 0){
+		int count = 0;
+		for(int i = 0; i < merged_array_cols_size; i++){
+			while( (merged_array_cols[i] > merged_array_rows[count]) && (count < merged_array_rows_size) ){
+				//if (row_arr_size > 0)
+					count++;
+			}
+			if(count == 0)
+				local_ranks[merged_array_cols[i] - 1] = 100000;
+			else
+				local_ranks[merged_array_cols[i] - 1] = count;
+		}
+	}
+
+	// printf("w_myrank: %d, local_rank[", w_myrank);
+	// for(int i = 0; i < local_ranks_size; i++){
+	// 	printf("%d, ", local_ranks[i]);
+	// }
+	// printf("]\n");	
+
+	// make local ranks
+	MPI_Allreduce(local_ranks, arr_global_ranks, local_ranks_size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	// // // print global array
+	// if(w_myrank == 0){
+	// 	printf("w_myrank: %d, global_ranks[", w_myrank);
+	// 	for(int i = 0; i < local_ranks_size; i++){
+	// 		printf("%d, ", arr_global_ranks[i]);
+	// 	}
+	// 	printf("]\n");	
+	// }
+	//
+	// Redistribute data
+	// Adjust this code to your needs
+	//
+	MPI_Request req_arr[MAX_NUM_LOCAL_ELEMS];
+	MPI_Status stat_arr[MAX_NUM_LOCAL_ELEMS];
+	int n_req = 0;
+	int n_stat = 0;
+
+	// for (int i = 0; i < local_ranks_size; i++){
+	// 	arr_global_ranks[i] = arr_global_ranks[i] % 100000000;
+	// }
+					printf("count++");
+
+	int recv;
+	int i;
+	// distribute items make a send request for every item 
+	do{
+		for(int j = 0; j < local_ranks_size; j++){
+			if ((j + 1)  == elem_arr[i]) {
+				// printf("%d: w_myrank: %d sending %d to %d\n", j, w_myrank, elem_arr[i], arr_global_ranks[j] % 100000);
+				MPI_Isend( &(elem_arr[i]), 1, MPI_INT, arr_global_ranks[j] % 100000, 0, MPI_COMM_WORLD, req_arr + n_req );
+				elem_arr[i] = 0;
+				n_req++;
+			}
+		}
+		i++;
+	}while(i < n);
+
+	// get item assigned to process
+	for(int j = 0; j < local_ranks_size; j++){
+		if( (w_myrank != 0) && (w_myrank == arr_global_ranks[j] % 100000)){
+			// printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
+			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
+			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
+			n_stat++;
+		}
+		if((w_myrank == 0) && (arr_global_ranks[j] != 0) && (arr_global_ranks[j] % 100000 == 0)){
+			// printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
+			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
+			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
+			n_stat++;
+		}
+	}
+	// Receive element
+	// TODO
+
+	n = n_stat;
+	MPI_Waitall( n_req, req_arr, stat_arr );
+	if(n > 0)
+		printf("w_myrank: %d, elem_arr: %d\n", w_myrank, elem_arr[MAX_NUM_LOCAL_ELEMS - 1]);
 
 	//
 	// Measure the execution time after all the steps are finished, 
