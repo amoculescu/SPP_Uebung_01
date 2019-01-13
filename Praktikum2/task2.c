@@ -134,23 +134,25 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	int* merged_array = NULL;;
 
 	MPI_Status status;
-	int n_dim = log2(nprocs);
-	for (int i = 0; i < n_dim; i++) {
-		
+	int dim = log2(nprocs);
+	printf("myrank: %d, dim%d\n", myrank, dim - 1);
+	for (int i = 0; i < dim - 1; i++) {
 		kp_rank = myrank ^ (int)pow(2, i);
+		if(kp_rank > nprocs - 1)
+			printf("bad rank!!!");
 
 		//	MPI_Sendrecv(&len, 1, MPI_INT, myrank, 0, &len_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
 		//	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
 
 
 		// exchange arrays size
-		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, MPI_COMM_WORLD, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
+		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, comm, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
 
 		//create output arrays
 		kp_array = malloc(sizeof(int) * kp_array_size);
 		merged_array = malloc(sizeof(int) * (kp_array_size + len));
 		// exchange arrays
-		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, MPI_COMM_WORLD, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
+		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, comm, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
 
 		// merge array output: merged_array..  len =  new lenght
 		merge_arr(arr, len, kp_array, kp_array_size, merged_array, &len);
@@ -263,7 +265,7 @@ int main(int argc, char** argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &w_nprocs);
 
 	// split rows
-	int color_rows = w_myrank / 2;
+	int color_rows = w_myrank / sqrt(w_nprocs);
 	MPI_Comm row_comm;
 	MPI_Comm_split(MPI_COMM_WORLD, color_rows, w_myrank, &row_comm);
 
@@ -291,7 +293,6 @@ int main(int argc, char** argv) {
 
 	init_input(w_myrank, w_nprocs, elem_arr, &n, &total_n);
 	double start = get_clock_time();
-	printf("start: %d\n", start);
 
 	//visualize split
 	printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
@@ -309,8 +310,9 @@ int main(int argc, char** argv) {
 	int* merged_array_cols;
 	int merged_array_size_rows, merged_array_size_cols;
 
-	all_gather_merge(elem_arr, n, &merged_array_rows, &merged_array_size_rows, w_nprocs, MPI_COMM_WORLD);
-	
+	all_gather_merge(elem_arr, n, &merged_array_rows, &merged_array_size_rows, r_nprocs, row_comm);
+	all_gather_merge(elem_arr, n, &merged_array_cols, &merged_array_size_cols, c_nprocs, col_comm);
+
 	//
 	// Measure the execution time after all the steps are finished, 
 	// but before verifying the results
