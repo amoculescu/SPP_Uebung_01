@@ -34,7 +34,6 @@ int is_arr_sorted(int* arr, int len) {
 **/
 int verify_results(int* arr, int len, int myrank, int nprocs) {
 	int is_sorted_global = 0;
-	// TODO: From here on!
 	int failed = 0;
 	if (!(is_arr_sorted(arr, len)) || (len > 1))
 		failed = 1;
@@ -117,8 +116,6 @@ void merge_arr(int* arr1, int len1, int* arr2, int len2, int* arr_out, int* len_
 void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	int nprocs, MPI_Comm comm) {
 
-    //TODO: From here on!
-
 	// get own rank
 	int myrank;
 	MPI_Comm_rank(comm, &myrank);
@@ -139,18 +136,14 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	for (int i = 0; i < dim - 1; i++) {
 		kp_rank = myrank ^ (int)pow(2, i);
 		
-		//	MPI_Sendrecv(&len, 1, MPI_INT, myrank, 0, &len_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
-		//	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
-
-
 		// exchange arrays size
-		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, comm, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
+		MPI_Sendrecv(&len, 1, MPI_INT, kp_rank, 0, &kp_array_size, 1, MPI_INT, kp_rank, 0, comm, &status);
 
 		//create output arrays
 		kp_array = malloc(sizeof(int) * kp_array_size);
 		merged_array = malloc(sizeof(int) * (kp_array_size + len));
 		// exchange arrays
-		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, comm, &status); //TODO: Comm Missing -> Check whether MPI_COMM_WORLD is ok
+		MPI_Sendrecv(arr, len, MPI_INT, kp_rank, 0, kp_array, kp_array_size, MPI_INT, kp_rank, 0, comm, &status); 
 
 		// merge array output: merged_array..  len =  new lenght
 		merge_arr(arr, len, kp_array, kp_array_size, merged_array, &len);
@@ -161,6 +154,7 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 		// set the pointer arr to point at the same adress as merged_array; 
 		arr = merged_array;
 	}
+
 	// printf("myrank: %d: mergedarr:[", myrank);
 	// for(int i = 0; i < len; i++){
 		// printf("%d, ", merged_array[i]);
@@ -172,8 +166,6 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	// setze den pointer auf den **out_arr zeigt auf die adresse von merged_array
 	*out_arr = merged_array;
 	*out_len = len;
-
-	// TODO
 }
 
 
@@ -383,10 +375,6 @@ int main(int argc, char** argv) {
 	int n_req = 0;
 	int n_stat = 0;
 
-	// for (int i = 0; i < local_ranks_size; i++){
-	// 	arr_global_ranks[i] = arr_global_ranks[i] % 100000000;
-	// }
-
 	int recv;
 	int i;
 	// distribute items make a send request for every item 
@@ -418,8 +406,6 @@ int main(int argc, char** argv) {
 		}
 	}
 	// Receive element
-	// TODO
-
 	n = n_stat;
 	MPI_Waitall( n_req, req_arr, stat_arr );
 	// if(n > 0)
@@ -430,8 +416,7 @@ int main(int argc, char** argv) {
 	// but before verifying the results
 	//
 
-
-	//TODO: Until here!
+    double elapsed = get_clock_time() - start;
 
 	//
 	// Verify the data is sorted globally
@@ -448,7 +433,6 @@ int main(int argc, char** argv) {
 
 	// Get timing - max across all ranks
 	double elapsed_global;
-    double elapsed = get_clock_time() - start;
 
     MPI_Reduce(&elapsed, &elapsed_global, 1, MPI_DOUBLE,
 		MPI_MAX, 0, MPI_COMM_WORLD);

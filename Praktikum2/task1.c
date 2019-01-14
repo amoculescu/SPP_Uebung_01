@@ -373,9 +373,6 @@ int main( int argc, char** argv ) {
 			n_stat++;
 		}
 	}
-	// Receive element
-	// TODO
-
 	n = n_stat;
 	MPI_Waitall( n_req, req_arr, stat_arr );
 	// printf("w_myrank: %d, elem_arr: %d\n", w_myrank, elem_arr[MAX_NUM_LOCAL_ELEMS - 1]);
