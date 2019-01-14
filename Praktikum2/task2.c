@@ -135,12 +135,10 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 	int dim = log2(nprocs);
 	if(dim < 2)
 		dim = 2;
-	printf("myrank: %d, dim %d\n", myrank, dim - 1);
+	// printf("myrank: %d, dim %d\n", myrank, dim - 1);
 	for (int i = 0; i < dim - 1; i++) {
 		kp_rank = myrank ^ (int)pow(2, i);
-		if(kp_rank > nprocs - 1)
-			printf("bad rank!!!");
-
+		
 		//	MPI_Sendrecv(&len, 1, MPI_INT, myrank, 0, &len_next, 1, MPI_INT, neighbor_up, 0, MPI_COMM_WORLD, &status);
 		//	MPI_Sendrecv(&len, 1, MPI_INT, neighbor_down, 0, &sent_to_prev, 1, MPI_INT, myrank, 0, MPI_COMM_WORLD, &status);
 
@@ -163,11 +161,11 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 		// set the pointer arr to point at the same adress as merged_array; 
 		arr = merged_array;
 	}
-	printf("myrank: %d: mergedarr:[", myrank);
-	for(int i = 0; i < len; i++){
-		printf("%d, ", merged_array[i]);
-	}
-	printf("]\n");
+	// printf("myrank: %d: mergedarr:[", myrank);
+	// for(int i = 0; i < len; i++){
+		// printf("%d, ", merged_array[i]);
+	// }
+	// printf("]\n");
 	// arr and merged_array point both point to the finel array
 	// len is th length of the meged array
 
@@ -196,7 +194,7 @@ void init_input(int w_myrank, int w_nprocs, int* input_arr,
 	int* displs = NULL;
 
 	if (w_myrank == 0) {
-		printf("Total number of input elements: %d\n", *total_elems);
+		// printf("Total number of input elements: %d\n", *total_elems);
 
 		global_arr = malloc(*total_elems * sizeof(int));
 
@@ -296,16 +294,16 @@ int main(int argc, char** argv) {
 	init_input(w_myrank, w_nprocs, elem_arr, &n, &total_n);
 
 	//visualize split
-	printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
+	// printf("w_myrank: %d, w_nprocs %d, r_myrank: %d, r_nprocs %d, c_myrank: %d, c_nprocs: %d, my n: %d\n", w_myrank, w_nprocs, r_myrank, r_nprocs, c_myrank, c_nprocs, n);
 
 
-	// see elements in elem_Arr
 	qsort(elem_arr, n, sizeof(int), comp_func);
-	printf("myrank: %d, elem_arr[", w_myrank);
-	for(int i = 0; i < n; i++){
-		printf("%d, ", elem_arr[i]);
-	}
-	printf("]\n");
+	// see elements in elem_Arr
+	// printf("myrank: %d, elem_arr[", w_myrank);
+	// for(int i = 0; i < n; i++){
+		// printf("%d, ", elem_arr[i]);
+	// }
+	// printf("]\n");
 
 	int* merged_array_rows;
 	int* merged_array_cols;
@@ -316,17 +314,17 @@ int main(int argc, char** argv) {
 
 
 		//print row and col arrays
-	printf("w_myrank: %d, row_arr[", w_myrank);
-	for(int i = 0; i < merged_array_rows_size; i++){
-		printf("%d, ", merged_array_rows[i]);
-	}
-	printf("]\n");
+	// printf("w_myrank: %d, row_arr[", w_myrank);
+	// for(int i = 0; i < merged_array_rows_size; i++){
+		// printf("%d, ", merged_array_rows[i]);
+	// }
+	// printf("]\n");
 
-	printf("w_myrank: %d, col_arr[", w_myrank);
-	for(int i = 0; i < merged_array_cols_size; i++){
-		printf("%d, ", merged_array_cols[i]);
-	}
-	printf("]\n");
+	// printf("w_myrank: %d, col_arr[", w_myrank);
+	// for(int i = 0; i < merged_array_cols_size; i++){
+		// printf("%d, ", merged_array_cols[i]);
+	// }
+	// printf("]\n");
 
 
 	int local_ranks_size = 0;
@@ -359,22 +357,22 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	// printf("w_myrank: %d, local_rank[", w_myrank);
+	// // printf("w_myrank: %d, local_rank[", w_myrank);
 	// for(int i = 0; i < local_ranks_size; i++){
-	// 	printf("%d, ", local_ranks[i]);
+	// 	// printf("%d, ", local_ranks[i]);
 	// }
-	// printf("]\n");	
+	// // printf("]\n");	
 
 	// make local ranks
 	MPI_Allreduce(local_ranks, arr_global_ranks, local_ranks_size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
 	// // // print global array
 	// if(w_myrank == 0){
-	// 	printf("w_myrank: %d, global_ranks[", w_myrank);
+	// 	// printf("w_myrank: %d, global_ranks[", w_myrank);
 	// 	for(int i = 0; i < local_ranks_size; i++){
-	// 		printf("%d, ", arr_global_ranks[i]);
+	// 		// printf("%d, ", arr_global_ranks[i]);
 	// 	}
-	// 	printf("]\n");	
+	// 	// printf("]\n");	
 	// }
 	//
 	// Redistribute data
@@ -395,7 +393,7 @@ int main(int argc, char** argv) {
 	do{
 		for(int j = 0; j < local_ranks_size; j++){
 			if ((j + 1)  == elem_arr[i]) {
-				// printf("%d: w_myrank: %d sending %d to %d\n", j, w_myrank, elem_arr[i], arr_global_ranks[j] % 100000);
+				// // printf("%d: w_myrank: %d sending %d to %d\n", j, w_myrank, elem_arr[i], arr_global_ranks[j] % 100000);
 				MPI_Isend( &(elem_arr[i]), 1, MPI_INT, arr_global_ranks[j] % 100000, 0, MPI_COMM_WORLD, req_arr + n_req );
 				elem_arr[i] = 0;
 				n_req++;
@@ -407,13 +405,13 @@ int main(int argc, char** argv) {
 	// get item assigned to process
 	for(int j = 0; j < local_ranks_size; j++){
 		if( (w_myrank != 0) && (w_myrank == arr_global_ranks[j] % 100000)){
-			// printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
+			// // printf("myrank: %d, making a recv req for %d\n", w_myrank, j + 1);
 			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
 			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
 			n_stat++;
 		}
 		if((w_myrank == 0) && (arr_global_ranks[j] != 0) && (arr_global_ranks[j] % 100000 == 0)){
-			// printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
+			// // printf("myrank: %d, making a reccv req for %d\n", w_myrank, j + 1);
 			MPI_Recv(&recv + n_stat, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, stat_arr + n_stat);
 			elem_arr[MAX_NUM_LOCAL_ELEMS - 1 - n_stat] = recv;
 			n_stat++;
@@ -424,8 +422,8 @@ int main(int argc, char** argv) {
 
 	n = n_stat;
 	MPI_Waitall( n_req, req_arr, stat_arr );
-	if(n > 0)
-		printf("w_myrank: %d, elem_arr: %d\n", w_myrank, elem_arr[MAX_NUM_LOCAL_ELEMS - 1]);
+	// if(n > 0)
+		// printf("w_myrank: %d, elem_arr: %d\n", w_myrank, elem_arr[MAX_NUM_LOCAL_ELEMS - 1]);
 
 	//
 	// Measure the execution time after all the steps are finished, 
@@ -448,14 +446,12 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	//TODO: This as well
-
 	// Get timing - max across all ranks
 	double elapsed_global;
     double elapsed = get_clock_time() - start;
 
     MPI_Reduce(&elapsed, &elapsed_global, 1, MPI_DOUBLE,
-		MPI_MAX, 0, MPI_COMM_WORLD); //TODO: Elapsed is unkown!
+		MPI_MAX, 0, MPI_COMM_WORLD);
 
 	if (w_myrank == 0) {
 		printf("Elapsed time (ms): %f\n", elapsed_global);
