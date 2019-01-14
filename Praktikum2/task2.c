@@ -1,5 +1,3 @@
-// pielst :toint
-
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -305,7 +303,7 @@ int main(int argc, char** argv) {
 	all_gather_merge(elem_arr, n, &merged_array_cols, &merged_array_cols_size, c_nprocs, col_comm);
 
 
-		//print row and col arrays
+	//print row and col arrays
 	// printf("w_myrank: %d, row_arr[", w_myrank);
 	// for(int i = 0; i < merged_array_rows_size; i++){
 		// printf("%d, ", merged_array_rows[i]);
