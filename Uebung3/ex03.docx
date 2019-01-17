@@ -1,0 +1,69 @@
+﻿Exercise 03:
+
+Aufgabe1:
+a) Bei sequentieller Abarbeitung werden 15 Stunden Gesamtzeit benötigt, da für jede der 5 Ladungen 3 Etappen a je 1 Stunde Arbeitszeit anfallen
+#Ladungen * (Waschen + Trocknen + Bügeln) = Gesamtzeit
+5 * (1 + 1 + 1) = 15
+b) Wenn Freunde beim Wäsche abarbeiten helfen, würden wir es so parallelisieren, dass  jeder zu Beginn eine Ladung Wäsche bekommt und diese dann zuerst wäscht, dann trocknet und bügelt, um den Transport/Kommunikation der Wäsche möglichst gering zu halten. Nachdem 1 Ladung komplett bearbeitet ist bekommt die entsprechende Person eine neue Ladung, falls vorhanden. (SCHEMA = MASTER-WORKER-PATTERN (?) ) . Zeitlich würde dieses Verfahren mindestens 3 Stunden dauern (5+ Arbeiter), da jede Ladung eine Mindestarbeitszeit von eben 3 Stunden besitzt. Bei weniger wie 5 Arbeitern ergibt sich eine entsprechend längere Gesamtzeit, da mindestens 1 Arbeiter 2 Ladungen abarbeiten muss. 
+c) In der Tabelle wird dargestellt, wie die Arbeit bei paralleler Ausführung aufgeteilt werden kann. Wie leicht ersichtlich ist, wird eine Gesamtzeit von 7 Stunden benötigt, um alle 5 Ladungen komplett zu waschen, trocknen und zu bügeln. (SCHEMA = PIPELINE-PATTERN (?) )
+ZEITSCHRITT
+WASCHEN
+TROCKNEN
+BÜGELN
+T = 1 Stunde
+Ladung 1
+-
+-
+T = 2 Stunde
+Ladung 2
+Ladung 1
+-
+T = 3 Stunde
+Ladung 3
+Ladung 2
+Ladung 1
+T = 4 Stunde
+Ladung 4
+Ladung 3
+Ladung 2
+T = 5 Stunde
+Ladung 5
+Ladung 4
+Ladung 3
+T = 6 Stunde
+-
+Ladung 5
+Ladung 4
+T = 7 Stunde
+-
+-
+Ladung 5
+
+
+
+Aufgabe2:
+a) Be
+b) p
+
+
+Aufgabe3:
+a) Leistungsverbesserung, wenn sämtliche Gleitpunktoperationen um 1.5 verbessert werden:
+40% der Anwendung laufen auf 1facher Leistungsperformance, 60% auf 1.5facher Leistungsperformance
+0.4 * 1 + 0.6 * 1.5 =1.3
+Leistungsverbesserung, wenn die Quadratwurzelberechnung um Faktor 8 verbessert wird:
+Gesamtanteil der Quadratwurzelberechnung: 0.6 * 0.25 = 0.15
+85% der Anwendung laufen auf 1facher Leistungsperformance, 15% laufen auf 8facher Leistungsperformance 
+=> 0.85 * 1 + 0.15 * 8 = 2.05
+Somit profitiert die Anwendung von der zweiten Verbesserung mehr.
+b) 
+Speedup = OldTime / NewTime = 1 / 0.15625 = 6,4
+OldTime = 1
+NewTime = 0.1 / 1 + 0.9 / 16 = 0.15625
+Mit dieser Parallelisierung ist ein Speedup von 6,4 möglich.
+c) 
+X = Anteil des programms, dass für Speedup von 10 parallelisiert sein muss, wenn auf 16 Prozessoren parallelisiert wird.
+Speedup = OldTime / NewTime
+NewTime = (1 – x) / 1 + x / 16
+10 = 1 / ( 1 – x + x / 16)
+x = 0.96 
+somit müssen 96% des Programms perfekt parallelisiert werden, um mit 16 Prozessen einen Speedup von 10 zu erreichen.
