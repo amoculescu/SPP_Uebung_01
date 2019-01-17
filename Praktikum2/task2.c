@@ -148,6 +148,7 @@ void all_gather_merge(int* arr, int len, int** out_arr, int* out_len,
 
 		//free old arrays
 		free(kp_array);
+		free(&arr);
 
 		// set the pointer arr to point at the same adress as merged_array; 
 		arr = merged_array;
