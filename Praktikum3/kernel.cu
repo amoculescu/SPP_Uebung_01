@@ -28,9 +28,9 @@ void cuda_grayscale(int width, int height, BYTE *image, BYTE *image_out){
 
     int i = 0;
     while(totalNumThreads * i  < width * height){ 
-        if(totalNumThreads * i + globalThreadId <= width * height){
-            int pixelindex = (globalThreadId * 3 + totalNumThreads * 3 * i);
-            BYTE *pixel = &image[pixelindex];
+        if(totalNumThreads * i + globalThreadId < width * height){
+            int pixelIndex = (globalThreadId * 3 + totalNumThreads * 3 * i);
+            BYTE *pixel = &image[pixelIndex];
             image_out[globalThreadId + totalNumThreads * i] = pixel[0] * 0.0722f + // B 
             pixel[1] * 0.7152f + // G
             pixel[2] * 0.2126f;  // R 
@@ -68,36 +68,6 @@ __global__ void cuda_bilateral_filter(BYTE* input, BYTE* output,
 	int width, int height,
 	int r, double sI, double sS)
 {
-    // for(int h = 0; h < height; h++){
-	// 	for(int w = 0; w < width; w++){
-	// 		double iFiltered = 0;
-	// 		double wP = 0;
-	// 		// Get the centre pixel value
-	// 		unsigned char centrePx = input[h*width+w];
-	// 		// Iterate through filter size from centre pixel
-	// 		for (int dy = -r; dy <= r; dy++) {
-	// 			int neighborY = h+dy;
-	// 			if (neighborY < 0)
-    //                 neighborY = 0;
-    //             else if (neighborY >= height)
-    //                 neighborY = height - 1;
-	// 			for (int dx = -r; dx <= r; dx++) {
-	// 				int neighborX = w+dx;
-	// 				if (neighborX < 0)
-	//                     neighborX = 0;
-	//                 else if (neighborX >= width)
-	//                     neighborX = width - 1;
-	// 				// Get the current pixel; value
-	// 				unsigned char currPx = input[neighborY*width+neighborX];
-	// 				// Weight = 1D Gaussian(x_axis) * 1D Gaussian(y_axis) * Gaussian(Range or Intensity difference)
-	// 				double w = (fGaussian[dy + r] * fGaussian[dx + r]) * cpu_gaussian(centrePx - currPx, sI);
-	// 				iFiltered += w * currPx;
-	// 				wP += w;				
-	// 			}
-	// 		}
-	// 		output[h*width + w] = iFiltered / wP;
-	// 	}
-    // }
     int threadsPerBlock = blockDim.x * blockDim.y;
     int threadIdInBlock = threadIdx.x + blockDim.x * threadIdx.y;
 
@@ -107,48 +77,46 @@ __global__ void cuda_bilateral_filter(BYTE* input, BYTE* output,
     int totalNumThreads = blocksInGrid * threadsPerBlock;
 
     int i = 0;
-    int neighborX;
-    int neighborY;
-    while(totalNumThreads * i  < width * height){ 
-        double iFiltered = 0;
-        double wP = 0;
-        int pixelindex = (globalThreadId + totalNumThreads * i);
-        unsigned char centrePx = input[pixelindex];
-        for (int dy = -r; dy < 0; dy++){
-            neighborY = fmaxf(0, pixelindex - width * dy);
-            for(int dx = -r; dx < 0; dy++){
-                neighborX = fmaxf(0, dx);
-                unsigned char currPx = input[neighborY - neighborX];
-                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
-                iFiltered += w * currPx;
-                wP += w;
+    int neighborXOffset;
+    int neighborYOffset;
+    double iFiltered = 0;
+    double wP = 0;
+    while(totalNumThreads * i  < width * height){
+        iFiltered = 0;
+        wP = 0;
+        if(globalThreadId + totalNumThreads * i < width * height ){
+            int pixelIndex = (globalThreadId + totalNumThreads * i);
+            unsigned char centrePx = input[pixelIndex];
+            for (int dy = -r; dy <= r; dy++){
+                int pixelIndexCoordX = pixelIndex % width;
+                int pixelIndexCoordY = pixelIndex / width;
+
+                if(pixelIndexCoordY + dy < 0)
+                    neighborYOffset = 0;
+                else if(pixelIndexCoordY + dy > height - 1)
+                    neighborYOffset = height - 1 - pixelIndexCoordY;
+                else
+                    neighborYOffset = dy;
+
+                for(int dx = -r; dx <= r; dx++){
+                    if( ((pixelIndexCoordX + dx) < 0) ||  (((pixelIndexCoordX + dx ) / width)   < (pixelIndexCoordX / width)) ) // neighbor is in row above
+                        neighborXOffset = pixelIndexCoordX * (-1);
+                    else if( ((pixelIndexCoordX + dx) / width) > (pixelIndexCoordX / width )  ) // neighbor in row bellow
+                        neighborXOffset = width - 1 - pixelIndexCoordX;
+                    else 
+                        neighborXOffset = dx;
+
+                    int neighborIndex = pixelIndex + neighborXOffset  + neighborYOffset * width;
+                    unsigned char currPx = input[neighborIndex];
+
+                    double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
+                    iFiltered += w * currPx;
+                    wP += w;
+                }
             }
-            for(int dx = 1; dx <= r; dx++){
-                neighborX = fminf(width, dx);
-                unsigned char currPx = input[neighborY - neighborX];
-                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
-                iFiltered += w * currPx;
-                wP += w;
-            }
+            output[pixelIndex] = iFiltered / wP;
         }
-        for(int dy = 1; dy <= r; dy++){ 
-            neighborY = fminf(height * width, pixelindex + width * dy);
-            for(int dx = -r; dx < 0; dy++){
-                neighborX = fmaxf(0, dx);
-                unsigned char currPx = input[neighborY - neighborX];
-                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
-                iFiltered += w * currPx;
-                wP += w;
-            }
-            for(int dx = 1; dx <= r; dx++){
-                neighborX = fminf(width, dx);
-                unsigned char currPx = input[neighborY - neighborX];
-                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
-                iFiltered += w * currPx;
-                wP += w;
-            }
-        }
-        output[pixelindex] = iFiltered / wP;
+        i++;
     }
 }
 
@@ -224,16 +192,14 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         cout << "GPU Grayscaling time: " << time << " (ms)\n";
         cout << "Launched blocks of size " << gray_block.x * gray_block.y << endl;
     
-         cudaError_t copyDeviceToHost  = cudaMemcpy(img_out.pixels, d_image_out[0],  image_size, cudaMemcpyDeviceToHost);
-        if(cudaSuccess != copyDeviceToHost)
+        cudaError_t copyDeviceToHost  = cudaMemcpy(img_out.pixels, d_image_out[0],  image_size, cudaMemcpyDeviceToHost);
+          if(cudaSuccess != copyDeviceToHost)
             cout << "copyDeviceToHost cuda error  " << copyDeviceToHost  << endl;
         else   
             cout << "copy device to host successful "  << endl;
 
         savePPM(img_out, "image_gpu_gray.ppm");
         cudaFree(d_input);
-        cudaFree(d_image_out);
-
 
 	// ******* Bilateral filter kernel launch *************
 	
@@ -267,13 +233,11 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
 
 	//TODO: transfer image from device to the main memory for saving onto the disk (2 pts)
 
-    cudaError_t copyDeviceToHostBilateral  = cudaMemcpy(img_out.pixels, d_image_out[1],  image_size, cudaMemcpyDeviceToHost);
+    cudaError_t copyDeviceToHostBilateral  = cudaMemcpy(output.pixels, d_image_out[1],  image_size, cudaMemcpyDeviceToHost);
     if(cudaSuccess != copyDeviceToHostBilateral)
         cout << "copyDeviceToHostBilateral cuda error  " << copyDeviceToHostBilateral  << endl;
     else   
         cout << "copy bilateral from device to host successful "  << endl;
-
-    savePPM(img_out, "image_gpu.ppm");
 
         // ************** Finalization, cleaning up ************
 
