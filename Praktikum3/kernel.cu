@@ -131,7 +131,7 @@ __global__ void cuda_bilateral_filter(BYTE* input, BYTE* output,
                 wP += w;
             }
         }
-        for(int dy = 1; dy <= r; i++){ 
+        for(int dy = 1; dy <= r; dy++){ 
             neighborY = fminf(height * width, pixelindex + width * dy);
             for(int dx = -r; dx < 0; dy++){
                 neighborX = fmaxf(0, dx);
@@ -147,7 +147,8 @@ __global__ void cuda_bilateral_filter(BYTE* input, BYTE* output,
                 iFiltered += w * currPx;
                 wP += w;
             }
-       }
+        }
+        output[pixelindex] = iFiltered / wP;
     }
 }
 
