@@ -18,37 +18,38 @@ using namespace std;
  */
 __global__
 void cuda_grayscale(int width, int height, BYTE *image, BYTE *image_out){
-    for (int h = 0; h < height ; h++)
+    /*for (int h = 0; h < height ; h++)
     {
         int offset_out = h * width;      // 1 color per pixel
         int offset  =  offset_out * 3; // 3 colors per pixel
         for (int w = 0; w < width; w++)
         {
             BYTE *pixel = &image[offset + w * 3];
-            image_out[offset_out + w] = pixel[0] + // B 
-            pixel[1] + // G
-            pixel[2];  // R ;
+            image_out[offset_out + w] = pixel[0] * 0.0722f + // B 
+            pixel[1] * 0.7152f + // G
+            pixel[2] * 0.2126f;  // R ;
         }
+    }*/
+
+    int threadsPerBlock = blockDim.x * blockDim.y;
+    int threadIdInBlock = threadIdx.x + blockDim.x * threadIdx.y;
+
+    int blocksInGrid = gridDim.x * gridDim.y;
+    int blockIdInGrid = blockIdx.x + gridDim.x * blockIdx.y;
+    int globalThreadId = blockIdInGrid * threadsPerBlock + threadIdInBlock;
+    int totalNumThreads = blocksInGrid * threadsPerBlock;
+
+    int i = 0;
+    while(totalNumThreads * i  < width * height){ 
+        if(totalNumThreads * i + globalThreadId <= width * height){
+            int pixelindex = (globalThreadId * 3 + totalNumThreads * 3 * i);
+            BYTE *pixel = &image[pixelindex];
+            image_out[globalThreadId + totalNumThreads * i] = pixel[0] * 0.0722f + // B 
+            pixel[1] * 0.7152f + // G
+            pixel[2] * 0.2126f;  // R 
+        }           
+        i++;
     }
-
-    // int threadsPerBlock = blockDim.x * blockDim.y;
-    // int threadIdInBlock = threadIdx.x + blockDim.x * threadIdx.y;
-
-    // int blocksInGrid = gridDim.x * gridDim.y;
-    // int blockIdInGrid = blockIdx.x + gridDim.x * blockIdx.y;
-    // int globalThreadId = blockIdInGrid * threadsPerBlock + threadIdInBlock;
-    // int totalNumThreads = blocksInGrid * threadsPerBlock;
-
-    // int i = 0;
-    // while(totalNumThreads * i  < width * height){ 
-    //     if(totalNumThreads * i + globalThreadId <= width * height){
-    //         BYTE *pixel = &image[globalThreadId * 3 + totalNumThreads * 3 * i];
-    //         image_out[globalThreadId + totalNumThreads * i] = pixel[0] * 0.0722f + // B 
-    //         pixel[1] * 0.7152f + // G
-    //         pixel[2] * 0.2126f;  // R 
-    //     }           
-    //     i++;
-    // }
     //TODO (9 pt): implement grayscale filter kernel
 }
 
@@ -140,7 +141,7 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
             cout << "malloc d_dinput successful "  << endl;
 
         BYTE *inputp = input.pixels;
-        cudaError_t copyHostToDevice =  cudaMemcpy(d_input, inputp, image_size , cudaMemcpyHostToDevice);
+        cudaError_t copyHostToDevice =  cudaMemcpy(d_input, inputp, image_size * 3, cudaMemcpyHostToDevice);
         if(cudaSuccess != copyHostToDevice)
             cout << "copyHostToDevice cuda error  " << cudaGetErrorString(copyHostToDevice)  << endl;
         else
@@ -149,7 +150,6 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         cudaEventRecord(start, 0); // start timer
         // Convert input image to grayscale
         //TODO: Launch cuda_grayscale() (2 pts)
-        cout << "cols:" << input.cols << "rows:" << input.rows << endl;
         cuda_grayscale<<<gray_dim, gray_block>>>(input.cols, input.rows, d_input, d_image_out[0]);
         cudaEventRecord(stop, 0); // stop timer
         cudaEventSynchronize(stop);
@@ -160,16 +160,12 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         cout << "Launched blocks of size " << gray_block.x * gray_block.y << endl;
     
         //TODO: transfer image from device to the main memory for saving onto the disk (2 pts)
-        BYTE *output_copy = img_out.pixels;
-        cout << "output_copy" << &output_copy << endl;
-        cudaDeviceSynchronize();
         cudaError_t copyDeviceToHost  = cudaMemcpy(img_out.pixels, d_image_out[0],  image_size, cudaMemcpyDeviceToHost);
         if(cudaSuccess != copyDeviceToHost)
             cout << "copyDeviceToHost cuda error  " << copyDeviceToHost  << endl;
         else   
             cout << "copy device to host successful "  << endl;
 
-        
         savePPM(img_out, "image_gpu_gray.ppm");
         cudaFree(d_input);
         cudaFree(d_image_out);
