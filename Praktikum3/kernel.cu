@@ -18,19 +18,6 @@ using namespace std;
  */
 __global__
 void cuda_grayscale(int width, int height, BYTE *image, BYTE *image_out){
-    /*for (int h = 0; h < height ; h++)
-    {
-        int offset_out = h * width;      // 1 color per pixel
-        int offset  =  offset_out * 3; // 3 colors per pixel
-        for (int w = 0; w < width; w++)
-        {
-            BYTE *pixel = &image[offset + w * 3];
-            image_out[offset_out + w] = pixel[0] * 0.0722f + // B 
-            pixel[1] * 0.7152f + // G
-            pixel[2] * 0.2126f;  // R ;
-        }
-    }*/
-
     int threadsPerBlock = blockDim.x * blockDim.y;
     int threadIdInBlock = threadIdx.x + blockDim.x * threadIdx.y;
 
@@ -50,13 +37,11 @@ void cuda_grayscale(int width, int height, BYTE *image, BYTE *image_out){
         }           
         i++;
     }
-    //TODO (9 pt): implement grayscale filter kernel
 }
 
 
 // 1D Gaussian kernel array values of a fixed size (make sure the number > filter size d)
-//TODO: Define the cGaussian array on the constant memory (2 pt)
-
+__constant__ float cGaussian[64];
 void cuda_updateGaussian(int r, double sd)
 {
 	float fGaussian[64];
@@ -65,12 +50,17 @@ void cuda_updateGaussian(int r, double sd)
 		float x = i - r;
 		fGaussian[i] = expf(-(x*x) / (2 * sd*sd));
 	}
-	//TODO: Copy computed fGaussian to the cGaussian on device memory (2 pts)
-	//cudaMemcpyToSymbol(cGaussian, fGaussian, 64 * sizeof(float). cudaMemcpyDeviceToHost/* TODO */);
+    cudaError_t copyHostToDeviceSymbol = cudaMemcpyToSymbol(cGaussian, fGaussian, 64 * sizeof(float), 0, cudaMemcpyHostToDevice);
+    if(cudaSuccess != copyHostToDeviceSymbol)
+        cout << "copy to Symbol on device cuda error  " << copyHostToDeviceSymbol  << endl;
+    else   
+        cout << "copy to Symbol on device successful "  << endl;
 }
 
 //TODO: implement cuda_gaussian() kernel (3 pts)
-
+__device__ double cuda_gaussian(float x, double sigma){
+	return expf(-(powf(x, 2)) / (2 * powf(sigma, 2)));
+}
 
 /*********** Bilateral Filter  *********/
 // Parallel (GPU) Bilateral filter kernel
@@ -78,7 +68,87 @@ __global__ void cuda_bilateral_filter(BYTE* input, BYTE* output,
 	int width, int height,
 	int r, double sI, double sS)
 {
-	//TODO: implement bilateral filter kernel (9 pts)
+    // for(int h = 0; h < height; h++){
+	// 	for(int w = 0; w < width; w++){
+	// 		double iFiltered = 0;
+	// 		double wP = 0;
+	// 		// Get the centre pixel value
+	// 		unsigned char centrePx = input[h*width+w];
+	// 		// Iterate through filter size from centre pixel
+	// 		for (int dy = -r; dy <= r; dy++) {
+	// 			int neighborY = h+dy;
+	// 			if (neighborY < 0)
+    //                 neighborY = 0;
+    //             else if (neighborY >= height)
+    //                 neighborY = height - 1;
+	// 			for (int dx = -r; dx <= r; dx++) {
+	// 				int neighborX = w+dx;
+	// 				if (neighborX < 0)
+	//                     neighborX = 0;
+	//                 else if (neighborX >= width)
+	//                     neighborX = width - 1;
+	// 				// Get the current pixel; value
+	// 				unsigned char currPx = input[neighborY*width+neighborX];
+	// 				// Weight = 1D Gaussian(x_axis) * 1D Gaussian(y_axis) * Gaussian(Range or Intensity difference)
+	// 				double w = (fGaussian[dy + r] * fGaussian[dx + r]) * cpu_gaussian(centrePx - currPx, sI);
+	// 				iFiltered += w * currPx;
+	// 				wP += w;				
+	// 			}
+	// 		}
+	// 		output[h*width + w] = iFiltered / wP;
+	// 	}
+    // }
+    int threadsPerBlock = blockDim.x * blockDim.y;
+    int threadIdInBlock = threadIdx.x + blockDim.x * threadIdx.y;
+
+    int blocksInGrid = gridDim.x * gridDim.y;
+    int blockIdInGrid = blockIdx.x + gridDim.x * blockIdx.y;
+    int globalThreadId = blockIdInGrid * threadsPerBlock + threadIdInBlock;
+    int totalNumThreads = blocksInGrid * threadsPerBlock;
+
+    int i = 0;
+    int neighborX;
+    int neighborY;
+    while(totalNumThreads * i  < width * height){ 
+        double iFiltered = 0;
+        double wP = 0;
+        int pixelindex = (globalThreadId + totalNumThreads * i);
+        unsigned char centrePx = input[pixelindex];
+        for (int dy = -r; dy < 0; dy++){
+            neighborY = fmaxf(0, pixelindex - width * dy);
+            for(int dx = -r; dx < 0; dy++){
+                neighborX = fmaxf(0, dx);
+                unsigned char currPx = input[neighborY - neighborX];
+                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
+                iFiltered += w * currPx;
+                wP += w;
+            }
+            for(int dx = 1; dx <= r; dx++){
+                neighborX = fminf(width, dx);
+                unsigned char currPx = input[neighborY - neighborX];
+                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
+                iFiltered += w * currPx;
+                wP += w;
+            }
+        }
+        for(int dy = 1; dy <= r; i++){ 
+            neighborY = fminf(height * width, pixelindex + width * dy);
+            for(int dx = -r; dx < 0; dy++){
+                neighborX = fmaxf(0, dx);
+                unsigned char currPx = input[neighborY - neighborX];
+                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
+                iFiltered += w * currPx;
+                wP += w;
+            }
+            for(int dx = 1; dx <= r; dx++){
+                neighborX = fminf(width, dx);
+                unsigned char currPx = input[neighborY - neighborX];
+                double w = (cGaussian[dy + r] * cGaussian[dx + r]) * cuda_gaussian(centrePx - currPx, sI);
+                iFiltered += w * currPx;
+                wP += w;
+            }
+       }
+    }
 }
 
 
@@ -105,13 +175,12 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         int block_dim_x, block_dim_y;
         block_dim_x = block_dim_y = (int) sqrt(suggested_blockSize); 
 
-        dim3 gray_block(block_dim_x, block_dim_y/* TODO */); // 2 pts
+        dim3 gray_block(block_dim_x, block_dim_y); // 2 pts
 
-        //TODO: Calculate grid size to cover the whole image - 2 pts
         int grid_dim_x, grid_dim_y;
         grid_dim_x = fmax(input.cols / block_dim_x, suggested_minGridSize);
         grid_dim_y = fmax(input.rows / block_dim_y, suggested_minGridSize);
-        dim3 gray_dim(grid_dim_x, grid_dim_y);
+        dim3 gray_grid(grid_dim_x, grid_dim_y);
 
         // Allocate the intermediate image buffers for each step
         Image img_out(input.cols, input.rows, 1, "P5");
@@ -122,21 +191,17 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
             if(cudaSuccess != malloc_result)
                cout << "malloc " << i << " cuda error " << malloc_result << endl;
             else
-                cout << "malloc " << i << " d_image_out successful "   << endl;
+                cout << "malloc d_image_out[" << i << "] successful "   << endl;
             cudaError_t memset_result = cudaMemset(d_image_out[i], 0xff, image_size);
             if(cudaSuccess != memset_result)
                 cout << "memset " << i << " cuda error  " << memset_result  << endl;
             else
-                cout << "memset " << i << " d_image_out successful "  << endl;
-            //TODO: allocate memory on the device (2 pts)
-            //TODO: intialize allocated memory on device to zero (2 pts)
-        }
+                cout << "memset d_image_out[" << i << "] successful "  << endl;
+         }
         //copy input image to device
-        //TODO: Allocate memory on device for input image (2 pts)
-        //TODO: Copy input image into the device memory (2 pts)
         cudaError_t mallocInput = cudaMalloc((void**) &d_input, image_size * 3);
         if(cudaSuccess != mallocInput)
-            cout << "mallocInput cuda error  " << mallocInput  << endl;
+            cout << "malloc Input cuda error  " << mallocInput  << endl;
         else
             cout << "malloc d_dinput successful "  << endl;
 
@@ -145,12 +210,11 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         if(cudaSuccess != copyHostToDevice)
             cout << "copyHostToDevice cuda error  " << cudaGetErrorString(copyHostToDevice)  << endl;
         else
-            cout << "copy host to device successful "  << endl;
+            cout << "copy input to device successful "  << endl;
 
         cudaEventRecord(start, 0); // start timer
         // Convert input image to grayscale
-        //TODO: Launch cuda_grayscale() (2 pts)
-        cuda_grayscale<<<gray_dim, gray_block>>>(input.cols, input.rows, d_input, d_image_out[0]);
+        cuda_grayscale<<<gray_grid, gray_block>>>(input.cols, input.rows, d_input, d_image_out[0]);
         cudaEventRecord(stop, 0); // stop timer
         cudaEventSynchronize(stop);
 
@@ -159,8 +223,7 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         cout << "GPU Grayscaling time: " << time << " (ms)\n";
         cout << "Launched blocks of size " << gray_block.x * gray_block.y << endl;
     
-        //TODO: transfer image from device to the main memory for saving onto the disk (2 pts)
-        cudaError_t copyDeviceToHost  = cudaMemcpy(img_out.pixels, d_image_out[0],  image_size, cudaMemcpyDeviceToHost);
+         cudaError_t copyDeviceToHost  = cudaMemcpy(img_out.pixels, d_image_out[0],  image_size, cudaMemcpyDeviceToHost);
         if(cudaSuccess != copyDeviceToHost)
             cout << "copyDeviceToHost cuda error  " << copyDeviceToHost  << endl;
         else   
@@ -178,26 +241,38 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         
         block_dim_x = block_dim_y = (int) sqrt(suggested_blockSize); 
 
-        dim3 bilateral_block(/* TODO */); // 2 pts
+        dim3 bilateral_block(block_dim_x, block_dim_y); // 2 pts
 
         //TODO: Calculate grid size to cover the whole image - 2pts
-
-        // Create gaussain 1d array
+        grid_dim_x = fmax(input.cols / block_dim_x, suggested_minGridSize);
+        grid_dim_y = fmax(input.rows / block_dim_y, suggested_minGridSize);
+        dim3 bilateral_grid(grid_dim_x, grid_dim_y);
+        // Create gaussian 1d array
         cuda_updateGaussian(r,sS);
 
         cudaEventRecord(start, 0); // start timer
-	//TODO: Launch cuda_bilateral_filter() (2 pts)
+    //TODO: Launch cuda_bilateral_filter() (2 pts)
+        cuda_bilateral_filter<<<bilateral_grid, bilateral_block>>>
+        (d_image_out[0], d_image_out[1], input.cols, input.rows, r, sI, sS);
         cudaEventRecord(stop, 0); // stop timer
         cudaEventSynchronize(stop);
 
         // Calculate and print kernel run time
         cudaEventElapsedTime(&time, start, stop);
         cout << "\nGPU Bilateral Filter time: " << time << " (ms)\n";
-       // cout << "Launched blocks of size " << bilateral_block.x * bilateral_block.y << endl;
+        cout << "Launched blocks of size " << bilateral_block.x * bilateral_block.y << endl;
 
         // Copy output from device to host
+
 	//TODO: transfer image from device to the main memory for saving onto the disk (2 pts)
 
+    cudaError_t copyDeviceToHostBilateral  = cudaMemcpy(img_out.pixels, d_image_out[1],  image_size, cudaMemcpyDeviceToHost);
+    if(cudaSuccess != copyDeviceToHostBilateral)
+        cout << "copyDeviceToHostBilateral cuda error  " << copyDeviceToHostBilateral  << endl;
+    else   
+        cout << "copy bilateral from device to host successful "  << endl;
+
+    savePPM(img_out, "image_gpu.ppm");
 
         // ************** Finalization, cleaning up ************
 
