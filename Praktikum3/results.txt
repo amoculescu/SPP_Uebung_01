@@ -1,0 +1,46 @@
+
+CPU graycaling time: 2.126 (ms)
+CPU Bilateral Filter time: 2106.14 (ms)
+
+CudaOccupanncy:
+
+	GPU Grayscaling time: 0.283808 (ms)
+
+	GPU Bilateral Filter time: 7.88426 (ms)
+
+
+
+
+
+
+
+block_size = 20 * 20
+
+	GPU Grayscaling time: 0.283648 (ms)
+	
+	GPU Bilateral Filter time: 8.38422 (ms)
+
+
+block_size = 10 * 10
+
+	GPU Grayscaling time: 0.300032 (ms)
+
+	GPU Bilateral Filter time: 9.76893 (ms)
+
+
+block_size = 5 * 5
+
+	GPU Grayscaling time: 0.322208 (ms)
+
+	GPU Bilateral Filter time: 23.2192 (ms)
+
+block_size = 31 * 31
+
+	GPU Grayscaling time: 0.286624 (ms)
+
+	GPU Bilateral Filter time: 8.29744 (ms)
+
+	
+
+
+
