@@ -1,44 +1,23 @@
 
-CPU graycaling time: 2.126 (ms)
-CPU Bilateral Filter time: 2106.14 (ms)
-
-CudaOccupanncy:
+Das Ausführen mit der vorgegbenen Occupancy-Fuktion erhalten wir eine Laufzeit von 
 
 	GPU Grayscaling time: 0.283808 (ms)
 
 	GPU Bilateral Filter time: 7.88426 (ms)
 
-
-
-
-
-
-
-block_size = 20 * 20
-
-	GPU Grayscaling time: 0.283648 (ms)
-	
-	GPU Bilateral Filter time: 8.38422 (ms)
-
-
-block_size = 10 * 10
-
-	GPU Grayscaling time: 0.300032 (ms)
-
-	GPU Bilateral Filter time: 9.76893 (ms)
-
-
-block_size = 5 * 5
+unseres Codes. Für weitere Blockgrößen haben wir beispielsweise 25(5x5) gewählt. Hier ergaben sich 
 
 	GPU Grayscaling time: 0.322208 (ms)
 
 	GPU Bilateral Filter time: 23.2192 (ms)
 
-block_size = 31 * 31
+Dies legt nahe, dass eine zu kleine Blockgröße gewählt wurde, wodurch das Programm stark ausgebremst wurde. Mit größer werdenden block Größen senkte sich die ausführungszeit allerdings näher an die der Occupancy-Variante. Z.B. blocksize 31x31:
 
 	GPU Grayscaling time: 0.286624 (ms)
 
 	GPU Bilateral Filter time: 8.29744 (ms)
+
+Wählte man aber eine zu große Block_size, so führte das Programm die Transformationen nicht mehr korrekt durch. Es terminierte dann fast unverzüglich und gab ein komplett weißes Bild zurück.
 
 	
 
