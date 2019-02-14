@@ -144,9 +144,6 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
         int block_dim_x, block_dim_y;
         block_dim_x = block_dim_y = (int) sqrt(suggested_blockSize);
 
-        //TODO: BLOCKSIZE HERE
-//        block_dim_x = block_dim_y = 31; //(int) image_size / 4;
-
         dim3 gray_block(block_dim_x, block_dim_y); // 2 pts
 
         int grid_dim_x, grid_dim_y;
@@ -210,9 +207,6 @@ void gpu_pipeline(const Image & input, Image & output, int r, double sI, double 
 	cudaOccupancyMaxPotentialBlockSize( &suggested_minGridSize, &suggested_blockSize, cuda_bilateral_filter); 
 
         block_dim_x = block_dim_y = (int) sqrt(suggested_blockSize);
-
-        //TODO: BLOCKSIZE HERE
-//        block_dim_x = block_dim_y = 31; //(int) image_size / 4;
 
         dim3 bilateral_block(block_dim_x, block_dim_y); // 2 pts
 
